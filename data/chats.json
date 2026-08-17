@@ -1,0 +1,51 @@
+{
+  "activeChats": {
+    "246091": {
+      "chatId": 246091,
+      "username": "",
+      "firstName": "Тестовый пользователь",
+      "startedAt": "2026-08-03T10:49:44.521Z",
+      "messages": []
+    },
+    "402019": {
+      "chatId": 402019,
+      "username": "",
+      "firstName": "Тестовый пользователь",
+      "startedAt": "2026-08-03T05:46:35.204Z",
+      "messages": [
+        {
+          "from": "user",
+          "text": "привет",
+          "timestamp": "2026-08-03T05:46:40.797Z"
+        }
+      ]
+    },
+    "874578": {
+      "chatId": 874578,
+      "username": "",
+      "firstName": "Тестовый пользователь",
+      "startedAt": "2026-08-03T12:09:10.529Z",
+      "messages": [
+        {
+          "from": "user",
+          "text": "привет",
+          "timestamp": "2026-08-03T12:09:15.854Z"
+        }
+      ]
+    },
+    "1211246636": {
+      "chatId": 1211246636,
+      "username": "Kirill_4561",
+      "firstName": "Кирюша",
+      "startedAt": "2026-08-06T18:39:57.144Z",
+      "messages": []
+    },
+    "8277531129": {
+      "chatId": 8277531129,
+      "username": "neresu",
+      "firstName": "Сириус",
+      "startedAt": "2026-08-16T17:11:25.672Z",
+      "messages": []
+    }
+  }
+}

@@ -1,0 +1,1345 @@
+// ─── Telegram WebApp init ────────────────────────────────────────────────────
+const tg = window.Telegram && window.Telegram.WebApp;
+if (tg) { 
+  tg.ready(); 
+  tg.expand();
+  console.log('=== Telegram WebApp initialized ===');
+  console.log('Version:', tg.version);
+  console.log('Platform:', tg.platform);
+  console.log('initData length:', tg.initData ? tg.initData.length : 0);
+  console.log('initDataUnsafe:', JSON.stringify(tg.initDataUnsafe, null, 2));
+  
+  if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+    console.log('User ID:', tg.initDataUnsafe.user.id);
+    console.log('Username:', tg.initDataUnsafe.user.username);
+    console.log('First name:', tg.initDataUnsafe.user.first_name);
+  } else {
+    console.log('⚠️ User data not in initDataUnsafe');
+  }
+} else {
+  console.log('⚠️ Telegram WebApp not available');
+}
+
+// ─── Генерация стабильного ID для пользователя ───────────────────────────────
+function getOrCreateUserId() {
+  // ПРИОРИТЕТ 1: User ID из URL параметра (передан ботом)
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlUserId = urlParams.get('userId');
+  
+  if (urlUserId) {
+    const telegramId = `tg_${urlUserId}`;
+    localStorage.setItem('miniapp_user_id', telegramId);
+    console.log('✅ Используется User ID из URL:', telegramId);
+    return telegramId;
+  }
+  
+  // ПРИОРИТЕТ 2: Telegram User ID из initDataUnsafe (если доступен)
+  if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) {
+    const telegramId = `tg_${tg.initDataUnsafe.user.id}`;
+    // Всегда обновляем localStorage с актуальным Telegram ID
+    localStorage.setItem('miniapp_user_id', telegramId);
+    console.log('✅ Используется Telegram ID из initDataUnsafe:', telegramId);
+    return telegramId;
+  }
+  
+  // ПРИОРИТЕТ 3: Проверяем был ли сохранен Telegram ID ранее
+  let userId = localStorage.getItem('miniapp_user_id');
+  
+  // Если есть сохраненный Telegram ID (начинается с 'tg_'), используем его
+  if (userId && userId.startsWith('tg_')) {
+    console.log('✅ Используется сохраненный Telegram ID:', userId);
+    return userId;
+  }
+  
+  // Если нет Telegram данных - показываем предупреждение
+  console.warn('⚠️ Mini App открыт не через Telegram!');
+  console.warn('⚠️ Откройте Mini App из бота для правильной идентификации');
+  
+  // Возвращаем временный ID с предупреждением
+  return 'guest_' + Date.now();
+}
+
+// Получаем/создаём ID пользователя
+const CURRENT_USER_ID = getOrCreateUserId();
+console.log('👤 Текущий User ID:', CURRENT_USER_ID);
+
+// Проверка что пользователь использует Telegram
+if (!CURRENT_USER_ID.startsWith('tg_')) {
+  console.warn('⚠️ Используется гостевой режим. Некоторые функции могут быть недоступны.');
+}
+
+// ─── Белый список администраторов ─────────────────────────────────────────────
+// Формат: 'tg_USERID' где USERID - это Telegram User ID
+const ADMIN_WHITELIST = [
+  'tg_8277531129',
+  'tg_8304388891', 
+  'tg_1211246636',
+  // Добавьте сюда ID других администраторов
+];
+
+// Переменные для админ-панели
+let isAdmin = false;
+let adminUserId = null;
+let adminCurrentCategoryId = null;
+let adminCurrentProductId = null;
+
+// ─── API Configuration ───────────────────────────────────────────────────────
+// Используем относительные пути - все на Vercel
+const API_BASE = '';
+console.log('API Base URL: relative (Vercel)');
+
+// ─── Product Data State ──────────────────────────────────────────────────────
+let categories = [];
+let products = [];
+
+// Встроенные категории как fallback
+const FALLBACK_CATEGORIES = [
+  { id: "disposable", name: "Одноразки/подики", icon: "❤️‍🔥" },
+  { id: "liquids", name: "Жидкости", icon: "💧" },
+  { id: "accessories", name: "Расходники", icon: "📍" },
+  { id: "energy", name: "Энергетики", icon: "🧃" }
+];
+
+// ─── State ───────────────────────────────────────────────────────────────────
+let cart = [];
+let history = [];
+let currentCategoryId = null;
+let currentProductId  = null;
+let selectedFlavors   = [];
+
+// Данные Telegram пользователя для заказа (заполняются при рендере checkout)
+let _orderTgUserId = null;
+let _orderTgFirstName = null;
+let _orderTgUsername = null;
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+function fmt(n) { return Number(n).toLocaleString('ru-RU') + ' ₽'; }
+function genId() {
+  return (Date.now().toString(36) + Math.random().toString(36).slice(2, 6)).toUpperCase();
+}
+
+function showToast(msg, color) {
+  let t = document.querySelector('.toast');
+  if (!t) { t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.style.background = color || '#27ae60';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function cartTotal() { return cart.reduce((s, i) => s + i.price * i.qty, 0); }
+function cartCount() { return cart.reduce((s, i) => s + i.qty, 0); }
+
+function updateCartBadge() {
+  const badge = document.getElementById('cart-badge');
+  const n = cartCount();
+  badge.textContent = n;
+  badge.style.display = n > 0 ? 'flex' : 'none';
+}
+
+// ─── Navigation ──────────────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  if (id === 'screen-home')     document.querySelector('.nav-btn:nth-child(1)').classList.add('active');
+  if (id === 'screen-cart')     document.querySelector('.nav-btn:nth-child(2)').classList.add('active');
+  if (id === 'screen-admin')    document.querySelector('.nav-btn:nth-child(3)').classList.add('active');
+  // Scroll to top on screen change
+  if (el) el.scrollTop = 0;
+}
+
+function navigate(screenId, pushHistory) {
+  if (pushHistory !== false) {
+    const cur = document.querySelector('.screen.active');
+    if (cur && cur.id !== screenId) history.push(cur.id);
+  }
+  showScreen(screenId);
+}
+
+function goBack() {
+  if (history.length > 0) showScreen(history.pop());
+  else showHome();
+}
+
+// ─── Home ────────────────────────────────────────────────────────────────────
+function showHome() {
+  history = [];
+  const grid = document.getElementById('categories-grid');
+  grid.innerHTML = '';
+  
+  categories.forEach(cat => {
+    const count = products.filter(p => p.categoryId === cat.id && !p.parentId && p.enabled !== false).length;
+    const card = document.createElement('div');
+    card.className = 'cat-card';
+    card.innerHTML = `
+      <div class="cat-icon">${cat.icon}</div>
+      <div class="cat-name">${cat.name}</div>
+      <div class="cat-count">${count} товаров</div>
+    `;
+    card.onclick = () => showCategory(cat.id);
+    grid.appendChild(card);
+  });
+  navigate('screen-home', false);
+}
+
+function showCatalog() {
+  showHome();
+  setTimeout(() => {
+    const g = document.querySelector('.categories-grid');
+    if (g) g.scrollIntoView({ behavior: 'smooth' });
+  }, 50);
+}
+
+// ─── Category ────────────────────────────────────────────────────────────────
+function showCategory(catId) {
+  currentCategoryId = catId;
+  const cat = categories.find(c => c.id === catId);
+  document.getElementById('category-title').textContent = `${cat.icon} ${cat.name}`;
+
+  const list = document.getElementById('products-list');
+  list.innerHTML = '';
+
+  products
+    .filter(p => p.categoryId === catId && !p.parentId && p.enabled !== false)
+    .forEach(p => {
+      list.appendChild(makeProductCard(p, () => {
+        if (p.isParent) showSubProducts(p.id);
+        else showDetail(p.id);
+      }));
+    });
+
+  navigate('screen-products');
+}
+
+function makeProductCard(p, onClick) {
+  const card = document.createElement('div');
+  card.className = 'product-card';
+
+  const thumb = document.createElement('div');
+  thumb.className = 'product-thumb';
+  if (p.image) {
+    const img = document.createElement('img');
+    img.alt = p.name;
+    
+    // Если это Telegram file_id (начинается с "AgAC"), используем API
+    if (p.image.startsWith('AgAC')) {
+      img.src = `${API_BASE}/api/photo/${encodeURIComponent(p.image)}`;
+    } else {
+      img.src = p.image;
+    }
+    
+    img.onerror = () => { 
+      // Fallback: пробуем placeholder URL
+      const placeholderUrl = `https://via.placeholder.com/400x300/1a1a2e/eee?text=${encodeURIComponent(p.name)}`;
+      if (img.src !== placeholderUrl) {
+        img.src = placeholderUrl;
+      } else {
+        thumb.textContent = p.icon || '📦'; 
+        img.remove();
+      }
+    };
+    thumb.appendChild(img);
+  } else {
+    thumb.textContent = p.icon || '📦';
+  }
+
+  const info = document.createElement('div');
+  info.className = 'product-info';
+  info.innerHTML = `
+    <div class="product-name">${p.name}</div>
+    <div class="product-desc">${getProductDesc(p)}</div>
+    <div class="product-price">${fmt(p.price)}</div>
+  `;
+
+  const arrow = document.createElement('span');
+  arrow.className = 'product-arrow';
+  arrow.textContent = '›';
+
+  card.appendChild(thumb);
+  card.appendChild(info);
+  card.appendChild(arrow);
+  card.onclick = onClick;
+  return card;
+}
+
+function getProductDesc(p) {
+  if (p.isParent) return 'Несколько линеек';
+  if (p.flavors && p.flavors.length) {
+    const enabledCount = p.flavors.filter(f => typeof f === 'string' || f.enabled === undefined || f.enabled === true).length;
+    return `${enabledCount} вкусов`;
+  }
+  if (p.colors && p.colors.length) {
+    const enabledColors = p.colors.filter(c => typeof c === 'string' || c.enabled === undefined || c.enabled === true);
+    return `${enabledColors.length} цветов`;
+  }
+  if (p.options && p.options.length)  return p.options.join(' · ');
+  return '';
+}
+
+// ─── Sub-products ─────────────────────────────────────────────────────────────
+function showSubProducts(parentId) {
+  const parent = products.find(p => p.id === parentId);
+  if (!parent) return;
+  document.getElementById('parent-title').textContent = parent.name;
+
+  const list = document.getElementById('subproducts-list');
+  list.innerHTML = '';
+
+  (parent.subProducts || [])
+    .map(id => products.find(p => p.id === id))
+    .filter(Boolean)
+    .forEach(p => list.appendChild(makeProductCard(p, () => showDetail(p.id))));
+
+  navigate('screen-subproducts');
+}
+
+// ─── Product Detail ───────────────────────────────────────────────────────────
+function showDetail(productId) {
+  currentProductId = productId;
+  selectedFlavors = [];
+  const p = products.find(x => x.id === productId);
+  if (!p) return;
+
+  document.getElementById('detail-title').textContent = p.name;
+  const content = document.getElementById('detail-content');
+  content.innerHTML = '';
+
+  // Image
+  const imgBox = document.createElement('div');
+  imgBox.className = 'detail-image';
+  if (p.image) {
+    const img = document.createElement('img');
+    img.alt = p.name;
+    
+    // Если это Telegram file_id (начинается с "AgAC"), используем API
+    if (p.image.startsWith('AgAC')) {
+      img.src = `${API_BASE}/api/photo/${encodeURIComponent(p.image)}`;
+    } else {
+      img.src = p.image;
+    }
+    
+    img.onerror = () => { 
+      // Fallback: пробуем placeholder URL
+      const placeholderUrl = `https://via.placeholder.com/400x300/1a1a2e/eee?text=${encodeURIComponent(p.name)}`;
+      if (img.src !== placeholderUrl) {
+        img.src = placeholderUrl;
+      } else {
+        imgBox.textContent = p.icon || '📦'; 
+        img.remove();
+      }
+    };
+    imgBox.appendChild(img);
+  } else {
+    imgBox.textContent = p.icon || '📦';
+  }
+  content.appendChild(imgBox);
+
+  // Body
+  const body = document.createElement('div');
+  body.className = 'detail-body';
+  body.innerHTML = `
+    <div class="detail-name">${p.name}</div>
+    <div class="detail-price">${fmt(p.price)}</div>
+  `;
+
+  // ── Flavors ──
+  if (p.flavors && p.flavors.length > 0) {
+    // Фильтруем только включенные вкусы с сохранением оригинальных индексов
+    const enabledFlavorsWithIndex = p.flavors
+      .map((f, originalIdx) => ({
+        name: typeof f === 'string' ? f : f.name,
+        enabled: typeof f === 'string' || f.enabled === undefined || f.enabled === true,
+        originalIdx
+      }))
+      .filter(item => item.enabled);
+
+    // Если нет включенных вкусов - показываем сообщение
+    if (enabledFlavorsWithIndex.length === 0) {
+      const noFlavorsMsg = document.createElement('div');
+      noFlavorsMsg.className = 'flavors-title';
+      noFlavorsMsg.style.color = '#e67e22';
+      noFlavorsMsg.textContent = '⚠️ Все вкусы временно недоступны';
+      body.appendChild(noFlavorsMsg);
+      content.appendChild(body);
+      return;
+    }
+
+    const enabledFlavors = enabledFlavorsWithIndex.map(item => item.name);
+
+    const title = document.createElement('div');
+    title.className = 'flavors-title';
+    title.textContent = 'Выберите вкус (можно несколько)';
+    body.appendChild(title);
+
+    const grid = document.createElement('div');
+    grid.className = 'flavors-grid';
+
+    enabledFlavorsWithIndex.forEach((item, displayIdx) => {
+      const chip = document.createElement('div');
+      chip.className = 'flavor-chip';
+      chip.textContent = item.name;
+      chip.onclick = () => {
+        const i = selectedFlavors.indexOf(displayIdx);
+        if (i === -1) selectedFlavors.push(displayIdx);
+        else selectedFlavors.splice(i, 1);
+        chip.classList.toggle('selected', selectedFlavors.includes(displayIdx));
+        updateAddBtn(p, enabledFlavors);
+      };
+      grid.appendChild(chip);
+    });
+    body.appendChild(grid);
+
+    const btn = document.createElement('button');
+    btn.className = 'add-to-cart-btn';
+    btn.id = 'add-btn';
+    btn.textContent = '🛒 Выберите вкус';
+    btn.disabled = true;
+    btn.onclick = () => addFlavorsToCart(p, enabledFlavors);
+    body.appendChild(btn);
+  }
+  // ── Colors ──
+  else if (p.colors && p.colors.length > 0) {
+    // Фильтруем только включённые, извлекаем имена
+    const enabledColors = p.colors
+      .filter(c => typeof c === 'string' || c.enabled === undefined || c.enabled === true)
+      .map(c => typeof c === 'object' ? c.name : c);
+    if (enabledColors.length === 0) {
+      const msg = document.createElement('div');
+      msg.className = 'flavors-title';
+      msg.style.color = '#e67e22';
+      msg.textContent = '⚠️ Все цвета временно недоступны';
+      body.appendChild(msg);
+    } else {
+      appendVariantSelector(body, p, enabledColors, 'Выберите цвет', '🛒 Выберите цвет');
+    }
+  }
+  // ── Options ──
+  else if (p.options && p.options.length > 0) {
+    appendVariantSelector(body, p, p.options, 'Выберите вариант', '🛒 Выберите вариант');
+  }
+  // ── No variants ──
+  else {
+    const btn = document.createElement('button');
+    btn.className = 'add-to-cart-btn';
+    btn.textContent = '🛒 Добавить в корзину';
+    btn.onclick = () => {
+      addCartItem(p.id, p.name, p.price, null);
+      showToast('✅ Добавлено в корзину!');
+    };
+    body.appendChild(btn);
+  }
+
+  content.appendChild(body);
+  navigate('screen-detail');
+}
+
+function appendVariantSelector(body, p, variants, titleText, btnText) {
+  const title = document.createElement('div');
+  title.className = 'flavors-title';
+  title.textContent = titleText;
+  body.appendChild(title);
+
+  const list = document.createElement('div');
+  list.className = 'options-list';
+  variants.forEach((v, idx) => {
+    const item = document.createElement('div');
+    item.className = 'option-item';
+    item.textContent = v;
+    item.onclick = () => {
+      list.querySelectorAll('.option-item').forEach(el => el.classList.remove('selected'));
+      item.classList.add('selected');
+      selectedFlavors = [idx];
+      updateAddBtn(p, variants);
+    };
+    list.appendChild(item);
+  });
+  body.appendChild(list);
+
+  const btn = document.createElement('button');
+  btn.className = 'add-to-cart-btn';
+  btn.id = 'add-btn';
+  btn.textContent = btnText;
+  btn.disabled = true;
+  btn.onclick = () => addFlavorsToCart(p, variants);
+  body.appendChild(btn);
+}
+
+function updateAddBtn(p, variants) {
+  const btn = document.getElementById('add-btn');
+  if (!btn) return;
+  if (selectedFlavors.length > 0) {
+    btn.disabled = false;
+    btn.textContent = (p.flavors && selectedFlavors.length > 1)
+      ? `🛒 Добавить ${selectedFlavors.length} вкуса`
+      : '🛒 Добавить в корзину';
+  } else {
+    btn.disabled = true;
+    btn.textContent = p.colors ? '🛒 Выберите цвет'
+                    : p.options ? '🛒 Выберите вариант'
+                    : '🛒 Выберите вкус';
+  }
+}
+
+function addFlavorsToCart(p, variants) {
+  if (selectedFlavors.length === 0) {
+    showToast('⚠️ Выберите хотя бы один вариант', '#e67e22');
+    return;
+  }
+  selectedFlavors.forEach(idx => addCartItem(p.id, p.name, p.price, variants[idx]));
+  showToast(`✅ Добавлено: ${selectedFlavors.length} шт.`);
+  selectedFlavors = [];
+  document.querySelectorAll('.flavor-chip.selected, .option-item.selected')
+    .forEach(el => el.classList.remove('selected'));
+  const btn = document.getElementById('add-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '🛒 Выберите вкус'; }
+}
+
+// ─── Cart ─────────────────────────────────────────────────────────────────────
+function addCartItem(productId, name, price, flavor) {
+  const key = productId + (flavor || '');
+  const existing = cart.find(i => i.productId + (i.flavor || '') === key);
+  if (existing) existing.qty++;
+  else cart.push({ productId, name, price, flavor: flavor || null, qty: 1 });
+  updateCartBadge();
+}
+
+function showCart() {
+  navigate('screen-cart');
+  renderCart();
+}
+
+function renderCart() {
+  const content = document.getElementById('cart-content');
+  content.innerHTML = '';
+
+  if (cart.length === 0) {
+    content.innerHTML = `
+      <div class="cart-empty">
+        <div class="cart-empty-icon">🛒</div>
+        <p>Корзина пуста</p>
+        <p style="margin-top:8px"><a onclick="showHome()" style="cursor:pointer">Перейти в каталог →</a></p>
+      </div>`;
+    return;
+  }
+
+  const itemsDiv = document.createElement('div');
+  itemsDiv.className = 'cart-items';
+
+  cart.forEach((item, idx) => {
+    const el = document.createElement('div');
+    el.className = 'cart-item';
+    el.innerHTML = `
+      <div class="cart-item-info">
+        <div class="cart-item-name">${item.name}</div>
+        ${item.flavor ? `<div class="cart-item-flavor">🎨 ${item.flavor}</div>` : ''}
+        <div class="cart-item-price">${fmt(item.price * item.qty)}</div>
+      </div>
+      <div class="cart-qty">
+        <button class="qty-btn" onclick="changeQty(${idx}, -1)">−</button>
+        <span class="qty-num">${item.qty}</span>
+        <button class="qty-btn" onclick="changeQty(${idx}, +1)">+</button>
+      </div>
+    `;
+    itemsDiv.appendChild(el);
+  });
+
+  const footer = document.createElement('div');
+  footer.className = 'cart-footer';
+  footer.innerHTML = `
+    <div class="cart-total">Итого: <span>${fmt(cartTotal())}</span></div>
+    <button class="checkout-btn" onclick="showCheckout()">✅ Оформить заказ</button>
+  `;
+
+  content.appendChild(itemsDiv);
+  content.appendChild(footer);
+}
+
+function changeQty(idx, delta) {
+  cart[idx].qty += delta;
+  if (cart[idx].qty <= 0) cart.splice(idx, 1);
+  updateCartBadge();
+  renderCart();
+}
+
+// ─── Checkout ─────────────────────────────────────────────────────────────────
+// Точки самовывоза
+const PICKUP_POINTS = [
+  { id: 'metro_pobedy', name: '📍 Метро Победы', address: 'Метро Победы' }
+];
+
+let selectedPickupPoint = null;
+
+function showCheckout() {
+  selectedPickupPoint = null;
+  navigate('screen-checkout');
+  renderCheckout();
+}
+
+function renderCheckout() {
+  const content = document.getElementById('checkout-content');
+  content.innerHTML = '';
+
+  const form = document.createElement('div');
+  form.className = 'checkout-form';
+
+  // Order summary
+  const summary = document.createElement('div');
+  summary.className = 'order-summary';
+  let html = `<div class="order-summary-title">📦 Ваш заказ</div>`;
+  cart.forEach(item => {
+    html += `
+      <div class="order-summary-item">
+        <span>${item.name}${item.flavor ? ` (${item.flavor})` : ''} × ${item.qty}</span>
+        <span>${fmt(item.price * item.qty)}</span>
+      </div>`;
+  });
+  html += `<div class="order-summary-total"><span>Итого</span><span>${fmt(cartTotal())}</span></div>`;
+  summary.innerHTML = html;
+  form.appendChild(summary);
+
+  // --- Выбор точки самовывоза ---
+  const pickupLabel = document.createElement('div');
+  pickupLabel.className = 'form-label';
+  pickupLabel.textContent = '🏪 Точка самовывоза';
+  form.appendChild(pickupLabel);
+
+  const pickupList = document.createElement('div');
+  pickupList.className = 'pickup-list';
+  PICKUP_POINTS.forEach(point => {
+    const pickupItem = document.createElement('div');
+    pickupItem.className = 'pickup-item';
+    pickupItem.innerHTML = `
+      <span class="pickup-icon">${point.name.split(' ')[0]}</span>
+      <span class="pickup-name">${point.name.replace(/📍\s*/, '')}</span>
+    `;
+    pickupItem.onclick = () => {
+      pickupList.querySelectorAll('.pickup-item').forEach(el => el.classList.remove('selected'));
+      pickupItem.classList.add('selected');
+      selectedPickupPoint = point;
+    };
+    // Выбираем первую точку по умолчанию
+    if (!selectedPickupPoint) {
+      pickupItem.classList.add('selected');
+      selectedPickupPoint = point;
+    }
+    pickupList.appendChild(pickupItem);
+  });
+  form.appendChild(pickupList);
+
+  // Получаем данные пользователя из Telegram
+  const tgUser = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
+  const tgUsername = tgUser && tgUser.username ? '@' + tgUser.username : '';
+  const tgFirstName = tgUser ? (tgUser.first_name || '') : '';
+  const tgUserId = tgUser ? tgUser.id : null;
+
+  // Сохраняем для submitOrder
+  _orderTgUserId = tgUserId;
+  _orderTgFirstName = tgFirstName;
+  _orderTgUsername = tgUsername;
+
+  // Показываем лучшее что есть: username или имя
+  const tgProfileValue = tgUsername || tgFirstName;
+
+  // --- Сначала чекбокс "взять из профиля" ---
+  const checkRow = document.createElement('label');
+  checkRow.className = 'checkout-check-row';
+  checkRow.id = 'check-row';
+  // Галочка активна по умолчанию если есть хоть какие-то данные из Telegram
+  const isChecked = !!tgProfileValue;
+  checkRow.innerHTML = `
+    <span class="custom-checkbox ${isChecked ? 'checked' : ''}" id="custom-cb"></span>
+    <input type="checkbox" id="check-profile" class="checkout-checkbox-hidden" ${isChecked ? 'checked' : ''}>
+    <span class="checkout-check-label">Взять из профиля Telegram</span>
+  `;
+  form.appendChild(checkRow);
+
+  // --- Потом поле ввода ---
+  const usernameLabel = document.createElement('div');
+  usernameLabel.className = 'form-label';
+  usernameLabel.textContent = tgUsername ? 'Ваш Telegram username' : 'Ваше имя / username';
+  form.appendChild(usernameLabel);
+
+  const usernameInput = document.createElement('input');
+  usernameInput.type = 'text';
+  usernameInput.className = 'form-input';
+  usernameInput.id = 'input-username';
+  usernameInput.placeholder = '@username или имя';
+  usernameInput.value = isChecked ? tgProfileValue : '';
+  usernameInput.disabled = isChecked;
+  form.appendChild(usernameInput);
+
+  // Submit button
+  const submitBtn = document.createElement('button');
+  submitBtn.className = 'submit-btn';
+  submitBtn.textContent = 'Отправить заказ менеджеру';
+  submitBtn.onclick = submitOrder;
+  form.appendChild(submitBtn);
+
+  content.appendChild(form);
+
+  // Логика кастомного чекбокса
+  const cb = document.getElementById('check-profile');
+  const customCb = document.getElementById('custom-cb');
+  const inp = document.getElementById('input-username');
+
+  checkRow.addEventListener('click', (e) => {
+    e.preventDefault();
+    cb.checked = !cb.checked;
+    if (cb.checked) {
+      customCb.classList.add('checked');
+      inp.value = tgProfileValue;
+      inp.disabled = true;
+    } else {
+      customCb.classList.remove('checked');
+      inp.disabled = false;
+      inp.value = '';
+      inp.focus();
+    }
+  });
+}
+
+function submitOrder() {
+  const usernameInput = document.getElementById('input-username');
+  const cb = document.getElementById('check-profile');
+  const username = usernameInput ? usernameInput.value.trim() : '';
+
+  // Если галочка снята — поле не может быть пустым
+  if (!cb || !cb.checked) {
+    if (!username) {
+      showToast('Введите ваш Telegram username', '#e67e22');
+      if (usernameInput) usernameInput.focus();
+      return;
+    }
+  }
+
+  // Собираем данные о пользователе из Telegram
+  const tgUser = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
+  const tgUserId = tgUser ? tgUser.id
+                 : (CURRENT_USER_ID && CURRENT_USER_ID.startsWith('tg_')
+                    ? parseInt(CURRENT_USER_ID.replace('tg_', ''))
+                    : null);
+  const tgFirstName = tgUser ? (tgUser.first_name || '') : _orderTgFirstName;
+  const tgUsernameVal = tgUser && tgUser.username ? '@' + tgUser.username : _orderTgUsername;
+  const tgInitData = tg && tg.initData ? tg.initData : null;
+
+  const orderId = genId();
+  const orderData = {
+    orderId,
+    username: username || tgUsernameVal || tgFirstName || null,
+    userId: tgUserId,
+    firstName: tgFirstName,
+    tgInitData,
+    pickupPoint: selectedPickupPoint ? selectedPickupPoint.address : 'Метро Победы',
+    items: cart.map(i => ({
+      productId: i.productId,
+      name: i.name,
+      flavor: i.flavor,
+      qty: i.qty,
+      price: i.price
+    })),
+    total: cartTotal(),
+    date: new Date().toISOString()
+  };
+
+  const btn = document.querySelector('.submit-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Отправляем...'; }
+
+  // Всегда отправляем через API — tg.sendData не работает при открытии через web_app URL
+  fetch(`${API_BASE}/api/order`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(orderData)
+  })
+    .then(r => r.json())
+    .then(() => { cart = []; updateCartBadge(); showSuccess(orderId); })
+    .catch(err => {
+      console.error('Order error:', err);
+      if (btn) { btn.disabled = false; btn.textContent = 'Отправить заказ менеджеру'; }
+      showToast('Ошибка отправки', '#e74c3c');
+    });
+}
+
+function showSuccess(orderId) {
+  const content = document.getElementById('checkout-content');
+  content.innerHTML = `
+    <div class="success-screen">
+      <div class="success-icon">🎉</div>
+      <h2>Заказ принят!</h2>
+      <div class="success-order-id">#${orderId}</div>
+      <p>Менеджер свяжется с вами в ближайшее время.<br>Оплата при получении наличными, при оплате переводом согласовывать с менеджером</p>
+      <button class="success-home-btn" onclick="showHome()">🏠 На главную</button>
+    </div>`;
+  showScreen('screen-checkout');
+}
+
+// ─── Load Products ────────────────────────────────────────────────────────────
+async function fetchProducts() {
+  showLoadingIndicator();
+  console.log('🔄 Fetching products...');
+  
+  categories = FALLBACK_CATEGORIES;
+  
+  // Сначала загружаем из API (Redis) — там актуальные данные с изменениями
+  try {
+    console.log('Trying /api/products (Redis)');
+    const apiResponse = await fetch('/api/products', { cache: 'no-cache' });
+    
+    if (apiResponse.ok) {
+      const apiData = await apiResponse.json();
+      if (apiData.success && apiData.products && apiData.products.length > 0) {
+        categories = apiData.categories || FALLBACK_CATEGORIES;
+        products = apiData.products;
+        console.log('✅ Loaded from Redis API:', products.length, 'products');
+        hideLoadingIndicator();
+        return true;
+      }
+    }
+    throw new Error('API returned no products');
+    
+  } catch (error) {
+    console.error('❌ API failed, trying static file:', error);
+    
+    // Fallback — статический products.json
+    try {
+      console.log('Trying /products.json (fallback)');
+      const response = await fetch('/products.json', {
+        cache: 'no-cache',
+        headers: { 'Accept': 'application/json' }
+      });
+      
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      
+      const data = await response.json();
+      
+      if (data.categories && data.categories.length > 0) categories = data.categories;
+      if (data.products && data.products.length > 0) {
+        products = data.products;
+        console.log('✅ Loaded from static file:', products.length, 'products');
+        hideLoadingIndicator();
+        return true;
+      }
+    } catch (fileError) {
+      console.error('❌ Static file also failed:', fileError);
+    }
+    
+    hideLoadingIndicator();
+    
+    // Если хоть категории есть - считаем успехом
+    if (categories.length > 0) {
+      showToast('⚠️ Товары не загружены, показаны только категории', '#e67e22');
+      return true;
+    }
+    
+    showToast('❌ Не удалось загрузить данные', '#e74c3c');
+    return false;
+  }
+}
+
+function showLoadingIndicator() {
+  let loader = document.getElementById('loading-indicator');
+  if (loader) return;
+  loader = document.createElement('div');
+  loader.id = 'loading-indicator';
+  loader.className = 'loading-indicator';
+  loader.innerHTML = '<div class="spinner"></div><p>Загрузка товаров...</p>';
+  document.body.appendChild(loader);
+}
+
+function hideLoadingIndicator() {
+  const loader = document.getElementById('loading-indicator');
+  if (loader) loader.remove();
+}
+
+// ─── Boot ─────────────────────────────────────────────────────────────────────
+(async function init() {
+  // Проверяем права администратора
+  checkAdminAccess();
+  
+  const loaded = await fetchProducts();
+  if (loaded) {
+    showHome();
+    updateCartBadge();
+  } else {
+    showScreen('screen-home');
+    const grid = document.getElementById('categories-grid');
+    if (grid) {
+      grid.innerHTML = `
+        <div class="error-message">
+          <div class="error-icon">⚠️</div>
+          <p>Не удалось загрузить товары</p>
+          <button class="retry-btn" onclick="location.reload()">🔄 Обновить</button>
+        </div>`;
+    }
+    updateCartBadge();
+  }
+})();
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// АДМИН-ПАНЕЛЬ
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Проверяем является ли пользователь админом
+function checkAdminAccess() {
+  console.log('🔍 Checking admin access...');
+  console.log('Current User ID:', CURRENT_USER_ID);
+  console.log('Admin Whitelist:', ADMIN_WHITELIST);
+  
+  const adminBtn = document.getElementById('admin-nav-btn');
+  
+  // Проверяем наличие в белом списке
+  if (ADMIN_WHITELIST.includes(CURRENT_USER_ID)) {
+    isAdmin = true;
+    adminUserId = CURRENT_USER_ID;
+    
+    if (adminBtn) {
+      adminBtn.style.display = 'flex';
+    }
+    
+    console.log('✅ Пользователь имеет права админа');
+    // Не показываем toast для админа
+  } else {
+    isAdmin = false;
+    
+    if (adminBtn) {
+      adminBtn.style.display = 'none';
+    }
+    
+    console.log('ℹ️ Обычный пользователь');
+    console.log('💡 Чтобы получить доступ к админке, добавьте ваш ID в белый список:');
+    console.log(`   ADMIN_WHITELIST = [..., '${CURRENT_USER_ID}']`);
+  }
+}
+
+function showAdminScreen() {
+  navigate('screen-admin');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const adminBtn = document.getElementById('admin-nav-btn');
+  if (adminBtn) adminBtn.classList.add('active');
+  
+  console.log('showAdminScreen called');
+  console.log('User ID:', CURRENT_USER_ID);
+  console.log('Is Admin:', isAdmin);
+  
+  // Проверяем права
+  if (!isAdmin) {
+    showToast(`❌ Доступ запрещен\nВаш ID: ${CURRENT_USER_ID}`, '#e74c3c');
+    console.log('💡 Для получения доступа добавьте ID в ADMIN_WHITELIST');
+    setTimeout(() => showHome(), 2000);
+    return;
+  }
+  
+  showAdminMain();
+}
+
+function showAdminMain() {
+  document.getElementById('admin-main').style.display = 'block';
+  document.getElementById('admin-products').style.display = 'none';
+  document.getElementById('admin-flavors').style.display = 'none';
+  
+  // Debug info для администратора
+  console.log('showAdminMain called');
+  console.log('Current User ID:', adminUserId);
+  console.log('Is Admin:', isAdmin);
+  console.log('Categories count:', categories.length);
+  console.log('Products count:', products.length);
+  console.log('Telegram data:', tg ? {
+    version: tg.version,
+    platform: tg.platform,
+    userId: tg.initDataUnsafe?.user?.id,
+    username: tg.initDataUnsafe?.user?.username
+  } : 'not available');
+  
+  const grid = document.getElementById('admin-categories');
+  if (!grid) {
+    console.error('❌ admin-categories element not found!');
+    showToast('❌ Ошибка: элемент admin-categories не найден', '#e74c3c');
+    return;
+  }
+  
+  grid.innerHTML = '';
+  
+  // Добавляем карточку с диагностикой
+  const debugCard = document.createElement('div');
+  debugCard.className = 'cat-card';
+  debugCard.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+  debugCard.innerHTML = `
+    <div class="cat-icon">🔍</div>
+    <div class="cat-name">Диагностика</div>
+    <div class="cat-count">User ID: ${adminUserId || 'unknown'}</div>
+  `;
+  debugCard.onclick = () => {
+    let debugInfo = '=== DEBUG INFO ===\n\n';
+    debugInfo += `User ID: ${CURRENT_USER_ID}\n`;
+    debugInfo += `Is Admin: ${isAdmin}\n`;
+    debugInfo += `Admin Whitelist: ${ADMIN_WHITELIST.join(', ')}\n`;
+    debugInfo += `Categories: ${categories.length}\n`;
+    debugInfo += `Products: ${products.length}\n\n`;
+    
+    if (tg) {
+      debugInfo += `Telegram WebApp:\n`;
+      debugInfo += `- Version: ${tg.version}\n`;
+      debugInfo += `- Platform: ${tg.platform}\n`;
+      debugInfo += `- initData: ${tg.initData ? 'available' : 'not available'}\n`;
+      debugInfo += `- initDataUnsafe: ${JSON.stringify(tg.initDataUnsafe, null, 2)}\n`;
+    } else {
+      debugInfo += `Telegram WebApp: not available\n`;
+    }
+    
+    debugInfo += `\n💡 Чтобы получить доступ к админке, добавьте ваш ID:\nADMIN_WHITELIST = [..., '${CURRENT_USER_ID}']`;
+    
+    alert(debugInfo);
+    console.log(debugInfo);
+  };
+  grid.appendChild(debugCard);
+  
+  console.log('Adding category cards...');
+  categories.forEach((cat, index) => {
+    console.log(`Adding category ${index + 1}:`, cat.name);
+    const count = products.filter(p => p.categoryId === cat.id && !p.parentId && p.enabled !== false).length;
+    const card = document.createElement('div');
+    card.className = 'cat-card';
+    card.innerHTML = `
+      <div class="cat-icon">${cat.icon}</div>
+      <div class="cat-name">${cat.name}</div>
+      <div class="cat-count">${count} товаров</div>
+    `;
+    card.onclick = () => showAdminCategory(cat.id);
+    grid.appendChild(card);
+  });
+  console.log('✅ Admin main screen rendered with', categories.length, 'categories');
+}
+
+function showAdminCategory(catId) {
+  adminCurrentCategoryId = catId;
+  const cat = categories.find(c => c.id === catId);
+  document.getElementById('admin-category-title').textContent = `${cat.icon} ${cat.name}`;
+
+  document.getElementById('admin-main').style.display = 'none';
+  document.getElementById('admin-products').style.display = 'block';
+  document.getElementById('admin-flavors').style.display = 'none';
+
+  const list = document.getElementById('admin-products-list');
+  list.innerHTML = '';
+
+  products
+    .filter(p => p.categoryId === catId && !p.parentId)
+    .forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'product-card';
+      card.style.position = 'relative';
+
+      const thumb = document.createElement('div');
+      thumb.className = 'product-thumb';
+      thumb.textContent = p.icon || '📦';
+
+      const info = document.createElement('div');
+      info.className = 'product-info';
+
+      let statusText = '';
+      if (p.isParent) {
+        statusText = 'Несколько линеек';
+      } else if (p.flavors && p.flavors.length) {
+        const enabled = p.flavors.filter(f =>
+          typeof f === 'string' || f.enabled === undefined || f.enabled === true
+        ).length;
+        statusText = `${enabled} / ${p.flavors.length} вкусов`;
+      } else if (p.colors && p.colors.length) {
+        const enabled = p.colors.filter(c =>
+          typeof c === 'string' || c.enabled === undefined || c.enabled === true
+        ).length;
+        statusText = `${enabled} / ${p.colors.length} цветов`;
+      }
+
+      const isProductEnabled = p.enabled !== false;
+
+      info.innerHTML = `
+        <div class="product-name" style="color:${isProductEnabled ? '#ecf0f1' : '#888'}">${p.name}</div>
+        <div class="product-desc">${statusText}</div>
+      `;
+
+      // Переключатель вкл/выкл
+      const toggle = document.createElement('div');
+      toggle.className = `admin-toggle ${isProductEnabled ? 'on' : 'off'}`;
+      toggle.innerHTML = isProductEnabled ? '✅' : '❌';
+      toggle.title = isProductEnabled ? 'Включён — нажмите чтобы выключить' : 'Выключен — нажмите чтобы включить';
+      toggle.onclick = (e) => {
+        e.stopPropagation();
+        toggleProductAdmin(p.id, !isProductEnabled);
+      };
+
+      card.appendChild(thumb);
+      card.appendChild(info);
+      card.appendChild(toggle);
+      card.onclick = () => {
+        if (p.isParent) showAdminSubProducts(p.id);
+        else showAdminFlavors(p.id);
+      };
+      list.appendChild(card);
+    });
+}
+
+function showAdminSubProducts(parentId) {
+  const parent = products.find(p => p.id === parentId);
+  if (!parent) return;
+  
+  adminCurrentProductId = parentId;
+  document.getElementById('admin-product-title').textContent = parent.name;
+  
+  document.getElementById('admin-main').style.display = 'none';
+  document.getElementById('admin-products').style.display = 'none';
+  document.getElementById('admin-flavors').style.display = 'block';
+  
+  const content = document.getElementById('admin-flavors-content');
+  content.innerHTML = '';
+  
+  const list = document.createElement('div');
+  list.className = 'products-list';
+  
+  (parent.subProducts || [])
+    .map(id => products.find(p => p.id === id))
+    .filter(Boolean)
+    .forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'product-card';
+      
+      const thumb = document.createElement('div');
+      thumb.className = 'product-thumb';
+      thumb.textContent = p.icon || '📦';
+      
+      const info = document.createElement('div');
+      info.className = 'product-info';
+      
+      let statusText = '';
+      if (p.flavors && p.flavors.length) {
+        const enabled = p.flavors.filter(f => 
+          typeof f === 'string' || f.enabled === undefined || f.enabled === true
+        ).length;
+        statusText = `${enabled} / ${p.flavors.length} вкусов`;
+      }
+      
+      info.innerHTML = `
+        <div class="product-name">${p.name}</div>
+        <div class="product-desc">${statusText}</div>
+      `;
+      
+      const arrow = document.createElement('span');
+      arrow.className = 'product-arrow';
+      arrow.textContent = '›';
+      
+      card.appendChild(thumb);
+      card.appendChild(info);
+      card.appendChild(arrow);
+      card.onclick = () => showAdminFlavors(p.id);
+      list.appendChild(card);
+    });
+  
+  content.appendChild(list);
+}
+
+function showAdminFlavors(productId) {
+  const product = products.find(p => p.id === productId);
+  if (!product) return;
+  
+  adminCurrentProductId = productId;
+  document.getElementById('admin-product-title').textContent = product.name;
+  
+  document.getElementById('admin-main').style.display = 'none';
+  document.getElementById('admin-products').style.display = 'none';
+  document.getElementById('admin-flavors').style.display = 'block';
+  
+  const content = document.getElementById('admin-flavors-content');
+  content.innerHTML = '';
+
+  // ── Colors ──────────────────────────────────────────────────────────────
+  if (product.colors && product.colors.length > 0) {
+    const title = document.createElement('div');
+    title.className = 'flavors-title';
+    title.textContent = 'Нажмите на цвет чтобы вкл/выкл:';
+    title.style.padding = '20px';
+    content.appendChild(title);
+
+    const grid = document.createElement('div');
+    grid.className = 'flavors-grid';
+    grid.style.padding = '0 20px 20px 20px';
+
+    product.colors.forEach((color, index) => {
+      const colorName = typeof color === 'string' ? color : color.name;
+      const isEnabled = typeof color === 'string' ? true : (color.enabled === undefined || color.enabled === true);
+
+      const chip = document.createElement('div');
+      chip.className = 'flavor-chip';
+      if (isEnabled) chip.classList.add('selected');
+      chip.textContent = `${isEnabled ? '✅' : '❌'} ${colorName}`;
+      chip.onclick = () => toggleColorAdmin(productId, index, !isEnabled);
+      grid.appendChild(chip);
+    });
+
+    content.appendChild(grid);
+    return;
+  }
+
+  // ── Flavors ──────────────────────────────────────────────────────────────
+  if (!product.flavors || product.flavors.length === 0) {
+    content.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">У этого товара нет вкусов</div>';
+    return;
+  }
+  
+  const title = document.createElement('div');
+  title.className = 'flavors-title';
+  title.textContent = 'Нажмите на вкус чтобы вкл/выкл:';
+  title.style.padding = '20px';
+  content.appendChild(title);
+  
+  const grid = document.createElement('div');
+  grid.className = 'flavors-grid';
+  grid.style.padding = '0 20px 20px 20px';
+  
+  product.flavors.forEach((flavor, index) => {
+    const flavorName = typeof flavor === 'string' ? flavor : flavor.name;
+    const isEnabled = typeof flavor === 'string' ? true : (flavor.enabled === undefined || flavor.enabled === true);
+    
+    const chip = document.createElement('div');
+    chip.className = 'flavor-chip';
+    if (isEnabled) chip.classList.add('selected');
+    chip.textContent = `${isEnabled ? '✅' : '❌'} ${flavorName}`;
+    chip.onclick = () => toggleFlavorAdmin(productId, index, !isEnabled);
+    grid.appendChild(chip);
+  });
+  
+  content.appendChild(grid);
+}
+
+async function toggleFlavorAdmin(productId, flavorIndex, enabled) {
+  try {
+    const response = await fetch(`${API_BASE}/api/admin/update-product`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        productId, 
+        flavorIndex, 
+        enabled,
+        userId: CURRENT_USER_ID  // Используем сгенерированный ID
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      showToast(`✅ ${enabled ? 'Включено' : 'Выключено'}`);
+      
+      // Обновляем локальные данные из Redis через API
+      try {
+        const refreshResponse = await fetch(`${API_BASE}/api/products`, {
+          cache: 'no-cache'
+        });
+        if (refreshResponse.ok) {
+          const refreshData = await refreshResponse.json();
+          if (refreshData.success && refreshData.products) {
+            products = refreshData.products;
+            categories = refreshData.categories || categories;
+            console.log('✅ Data refreshed from Redis');
+          }
+        }
+      } catch (refreshError) {
+        console.error('Refresh error:', refreshError);
+      }
+      
+      // Перерисовываем экран с обновленными данными
+      showAdminFlavors(productId);
+    } else {
+      showToast(`❌ ${data.error}`, '#e74c3c');
+      if (data.hint) {
+        console.log('💡', data.hint);
+      }
+    }
+  } catch (error) {
+    console.error('Toggle error:', error);
+    showToast('❌ Ошибка обновления', '#e74c3c');
+  }
+}
+
+async function toggleColorAdmin(productId, colorIndex, enabled) {
+  try {
+    const response = await fetch(`${API_BASE}/api/admin/update-product`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        productId,
+        colorIndex,
+        enabled,
+        userId: CURRENT_USER_ID
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      showToast(`${enabled ? '✅ Включено' : '❌ Выключено'}`);
+      try {
+        const refreshResponse = await fetch(`${API_BASE}/api/products`, { cache: 'no-cache' });
+        if (refreshResponse.ok) {
+          const refreshData = await refreshResponse.json();
+          if (refreshData.success && refreshData.products) {
+            products = refreshData.products;
+            categories = refreshData.categories || categories;
+          }
+        }
+      } catch (e) { console.error('Refresh error:', e); }
+      showAdminFlavors(productId);
+    } else {
+      showToast(`❌ ${data.error}`, '#e74c3c');
+    }
+  } catch (error) {
+    console.error('Toggle color error:', error);
+    showToast('❌ Ошибка обновления', '#e74c3c');
+  }
+}
+
+async function toggleProductAdmin(productId, enabled) {
+  try {
+    const response = await fetch(`${API_BASE}/api/admin/update-product`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        productId,
+        productEnabled: enabled,
+        userId: CURRENT_USER_ID
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      showToast(enabled ? '✅ Товар включён' : '❌ Товар выключен', enabled ? '#27ae60' : '#e74c3c');
+      // Обновляем локальные данные
+      try {
+        const refreshResponse = await fetch(`${API_BASE}/api/products`, { cache: 'no-cache' });
+        if (refreshResponse.ok) {
+          const refreshData = await refreshResponse.json();
+          if (refreshData.success && refreshData.products) {
+            products = refreshData.products;
+            categories = refreshData.categories || categories;
+          }
+        }
+      } catch (e) { console.error('Refresh error:', e); }
+      showAdminCategory(adminCurrentCategoryId);
+    } else {
+      showToast(`❌ ${data.error}`, '#e74c3c');
+    }
+  } catch (error) {
+    console.error('Toggle product error:', error);
+    showToast('❌ Ошибка обновления', '#e74c3c');
+  }
+}
+
+function goBackAdmin() {
+  const product = products.find(p => p.id === adminCurrentProductId);
+  if (product && product.parentId) {
+    showAdminSubProducts(product.parentId);
+  } else {
+    showAdminCategory(adminCurrentCategoryId);
+  }
+}

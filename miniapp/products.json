@@ -1,0 +1,2245 @@
+{
+  "success": true,
+  "categories": [
+    {
+      "id": "disposable",
+      "name": "Одноразки/подики",
+      "icon": "❤️‍🔥"
+    },
+    {
+      "id": "liquids",
+      "name": "Жидкости",
+      "icon": "💧"
+    },
+    {
+      "id": "accessories",
+      "name": "Расходники",
+      "icon": "📍"
+    },
+    {
+      "id": "energy",
+      "name": "Энергетики",
+      "icon": "🧃"
+    }
+  ],
+  "products": [
+    {
+      "id": "xros5",
+      "categoryId": "disposable",
+      "name": "Vaporesso XROS 5",
+      "description": "Премиальная под-система\n1000мАч, регулировка мощности\nType-C зарядка",
+      "price": 1900,
+      "cashPrice": 1900,
+      "stock": 20,
+      "icon": "🔋",
+      "location": "Все точки",
+      "image": "AgACAgIAAxkBAAIEYmpzQb-UnIS-pvyT_v8wwc8SjKLPAAI2G2sbmjmYS_tXlLzmLN1-AQADAgADeAADPQQ",
+      "colors": [
+        {
+          "name": "Cosmic Black",
+          "enabled": false
+        },
+        {
+          "name": "Grey Silk",
+          "enabled": false
+        },
+        {
+          "name": "Opal White",
+          "enabled": false
+        },
+        {
+          "name": "Blue Silk",
+          "enabled": false
+        },
+        {
+          "name": "Violet Silk",
+          "enabled": false
+        },
+        {
+          "name": "Lavender Purple",
+          "enabled": false
+        },
+        {
+          "name": "Coral Red",
+          "enabled": false
+        },
+        {
+          "name": "Opal Pink",
+          "enabled": false
+        },
+        {
+          "name": "Jade Green",
+          "enabled": false
+        },
+        {
+          "name": "Carbon Stripe",
+          "enabled": false
+        },
+        {
+          "name": "Black Leather",
+          "enabled": false
+        },
+        {
+          "name": "Brown Leather",
+          "enabled": false
+        },
+        {
+          "name": "Grey Leather",
+          "enabled": false
+        },
+        {
+          "name": "Red Leather",
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "id": "xros5mini",
+      "categoryId": "disposable",
+      "name": "Vaporesso XROS 5 Mini",
+      "description": "Компактная под-система\n800мАч, стильный дизайн\nType-C зарядка",
+      "price": 1500,
+      "cashPrice": 1500,
+      "stock": 25,
+      "icon": "🔋",
+      "location": "Все точки",
+      "image": "AgACAgIAAxkBAAIEfWpzTMHud-4FA8RLLJiYnizCn9ncAAKbG2sbmjmYSw9djdahim6-AQADAgADeQADPQQ",
+      "colors": [
+        {
+          "name": "Black",
+          "enabled": false
+        },
+        {
+          "name": "Carbon Black",
+          "enabled": false
+        },
+        {
+          "name": "Titanium Silver",
+          "enabled": false
+        },
+        {
+          "name": "PurpleSky Blue",
+          "enabled": false
+        },
+        {
+          "name": "Flowing Blue",
+          "enabled": false
+        },
+        {
+          "name": "Flowing Green",
+          "enabled": false
+        },
+        {
+          "name": "Flowing Pink",
+          "enabled": false
+        },
+        {
+          "name": "Pastel Crystal",
+          "enabled": false
+        },
+        {
+          "name": "Rose Red",
+          "enabled": false
+        },
+        {
+          "name": "Mist Black",
+          "enabled": false
+        },
+        {
+          "name": "Mist White",
+          "enabled": false
+        },
+        {
+          "name": "Retro Orange",
+          "enabled": false
+        },
+        {
+          "name": "Retro Pink",
+          "enabled": false
+        },
+        {
+          "name": "Cool Black",
+          "enabled": false
+        },
+        {
+          "name": "Cool Pink",
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "id": "xros6",
+      "categoryId": "disposable",
+      "name": "Vaporesso Xros 6",
+      "description": "Новейшая модель\n1200мАч, Type-C зарядка\nДисплей и умная регулировка",
+      "price": 2200,
+      "cashPrice": 2200,
+      "stock": 15,
+      "icon": "🔋",
+      "location": "Все точки",
+      "image": "AgACAgIAAxkBAAIEf2pzTUJEhJbTbfFoibQf7Z-cUxkoAAKeG2sbmjmYS-yxY3uyk2UKAQADAgADeAADPQQ",
+      "colors": [
+        {
+          "name": "Cosmic Black",
+          "enabled": false
+        },
+        {
+          "name": "Abyssal Blue",
+          "enabled": false
+        },
+        {
+          "name": "Slate Black",
+          "enabled": false
+        },
+        {
+          "name": "Carbon Fiber Gray",
+          "enabled": false
+        },
+        {
+          "name": "Pearl White",
+          "enabled": false
+        },
+        {
+          "name": "Dreamy Pink",
+          "enabled": false
+        },
+        {
+          "name": "Scorching Cloud",
+          "enabled": false
+        },
+        {
+          "name": "Aurora Blue",
+          "enabled": false
+        },
+        {
+          "name": "Silk Green",
+          "enabled": false
+        },
+        {
+          "name": "Silk Gray",
+          "enabled": false
+        },
+        {
+          "name": "Silk Brown",
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "id": "xros6mini",
+      "categoryId": "disposable",
+      "name": "Vaporesso Xros 6 Mini",
+      "description": "Компактная версия Xros 6\n900мАч, Type-C зарядка\nСовременный дизайн",
+      "price": 1800,
+      "cashPrice": 1800,
+      "stock": 20,
+      "icon": "🔋",
+      "location": "Все точки",
+      "image": "AgACAgIAAxkBAAIEgWpzTUvNfv1s6YlDd3HcPiau6PKFAAKfG2sbmjmYSxxax3OsTwt1AQADAgADeQADPQQ",
+      "colors": [
+        {
+          "name": "Black",
+          "enabled": false
+        },
+        {
+          "name": "Brown",
+          "enabled": false
+        },
+        {
+          "name": "Titanium Black",
+          "enabled": false
+        },
+        {
+          "name": "Titanium Silver",
+          "enabled": false
+        },
+        {
+          "name": "Plume White",
+          "enabled": false
+        },
+        {
+          "name": "Plume Pink",
+          "enabled": false
+        },
+        {
+          "name": "Plume Blue",
+          "enabled": false
+        },
+        {
+          "name": "Jelly Green",
+          "enabled": false
+        },
+        {
+          "name": "Jelly Pink",
+          "enabled": false
+        },
+        {
+          "name": "Jelly Blue",
+          "enabled": false
+        },
+        {
+          "name": "Jelly Orange",
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "id": "meloso_x",
+      "categoryId": "disposable",
+      "name": "MELOSO X (25K тяг)",
+      "description": "До 25000 затяжек\nНикотин: 50мг\nПремиум качество",
+      "price": 800,
+      "cashPrice": 800,
+      "stock": 30,
+      "icon": "💨",
+      "location": "Все точки",
+      "image": "AgACAgIAAxkBAAIEjWp0Wa6TXaxbKHdwUfG6AAFQ4yp4gQAC6xprG0jjqEvY-YCk4rAFbwEAAwIAA3kAAz0E",
+      "flavors": [
+        {
+          "name": "Арбуз лед",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Виноград кислое яблоко",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Виноград малина лед",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Вишня американская",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Всплеск ежевики",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Грейпфрут лимон",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Киви маракуйя",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Кислое яблоко лед",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Кислый виноград лед",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Клубничная жвачка",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Клубничный арбуз",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Клюква виноград лед",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Лайм ягоды апельсин",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Малина",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Прохладная мята",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Сочный персик лед",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Черника лед",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Черника малина лед",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Яблоко огурец",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Ягодный микс лед",
+          "stock": "",
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "id": "annima",
+      "categoryId": "liquids",
+      "name": "Annima",
+      "description": "Популярная солевая жидкость\nВыберите линейку\nОбъём: 30мл",
+      "price": 450,
+      "cashPrice": 450,
+      "stock": 50,
+      "icon": "💧",
+      "location": "Все точки",
+      "image": "AgACAgIAAxkBAAOTamtTi_fBGDqgJ8aq-qiOizR3BTcAAisXaxu7VWBLFYZE6cMzdrUBAAMCAAN5AAM9BA",
+      "isParent": true,
+      "subProducts": [
+        "annima_gold",
+        "annima_sour"
+      ]
+    },
+    {
+      "id": "annima_gold",
+      "categoryId": "liquids",
+      "name": "Annima Love Gold Edition 80мг",
+      "description": "Золотая линейка Annima\nСолевой никотин\nОбъём: 30мл",
+      "price": 450,
+      "cashPrice": 450,
+      "stock": 50,
+      "icon": "💧",
+      "parentId": "annima",
+      "image": "AgACAgIAAxkBAAIB5GpspalT1QjMEWww_UgY1Am2BpMZAAIsHWsbFE5pS1j8-x5QlEBUAQADAgADeAADPQQ",
+      "flavors": [
+        {
+          "name": "Ледяной виноград",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Морозный энергетик",
+          "stock": ""
+        },
+        {
+          "name": "Кислая вишня",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Вишнёвый сок",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Черника-ежевика",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Морс из диких ягод",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Сок лесных ягод",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Морозные лесные ягоды",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Смородиновый лимонад",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Малиновый лимонад",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Клубничный мохито",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Кислые конфеты Skittles",
+          "stock": "",
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "id": "annima_sour",
+      "categoryId": "liquids",
+      "name": "Annima Love Sour 50мг",
+      "description": "Кислая линейка Annima\nСолевой никотин\nОбъём: 30мл",
+      "price": 450,
+      "cashPrice": 450,
+      "stock": 50,
+      "icon": "💧",
+      "parentId": "annima",
+      "image": "AgACAgIAAxkBAAIB5mpspnLd4tWKen1JZUfH_pJVZWdOAAI0HWsbFE5pSyhUiJSUOa-VAQADAgADeQADPQQ",
+      "flavors": [
+        {
+          "name": "Виноградный чупа-чупс",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Вишня-гранат",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Газировка Фанта",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Жевательные конфеты",
+          "stock": ""
+        },
+        {
+          "name": "Зелёное яблоко",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Зелёный виноград",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Малина-лайм",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Малиновые червячки",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Тропический микс",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Фруктовый энергетик",
+          "stock": ""
+        },
+        {
+          "name": "Энергетик вишня",
+          "stock": ""
+        },
+        {
+          "name": "Черника малина",
+          "stock": "",
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "id": "evil_nun",
+      "categoryId": "liquids",
+      "name": "Злая монашка HARD 70мг",
+      "description": "Крепкая солевая жидкость\nЯркий вкус\nОбъём: 30мл",
+      "price": 500,
+      "cashPrice": 500,
+      "stock": 45,
+      "icon": "💧",
+      "location": "Все точки",
+      "image": "AgACAgIAAxkBAAOWamtUms1LVK--3plFHHXeweuz6sgAAi8Xaxu7VWBL2vA6MkwRuu0BAAMCAAN5AAM9BA",
+      "flavors": [
+        {
+          "name": "Ананас со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Апельсин с кислой малиной",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Вишневые конфеты",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Виноград-лайм",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Дикая малина с черникой",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Жвачка арбуз",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Жвачка виноград",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Жвачка земляника",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Жвачка смородина",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Йогурт с персиком и черникой",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Кислый чупа-чупс с холодком",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Клубнично-ежевичный морс",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Малиновое варенье",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Нектарин-вишня",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Фанта с колой",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Фруктовый мармелад лёд",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Черничный энергетик",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Энергетик виноград лёд",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Энергетик вишня лёд",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Энергетик смородина",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Ягодный морс",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Redbull с лесными ягодами",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Вишня черника",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Арбуз вишня",
+          "stock": "",
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "id": "zloy_long",
+      "categoryId": "liquids",
+      "name": "Bjorn long 80мг",
+      "description": "Ультракрепкая солевая жидкость\nНикотин: 80мг\nОбъём: 30мл",
+      "price": 500,
+      "cashPrice": 500,
+      "stock": 40,
+      "icon": "💧",
+      "location": "Все точки",
+      "image": "AgACAgIAAxkBAAOYamtVERzv48TEMnNWqnp-urb9qWsAAjAXaxu7VWBLBM8tje7LmXMBAAMCAAN5AAM9BA",
+      "flavors": [
+        {
+          "name": "Виноградный арбуз",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Виноградный чупа-чупс",
+          "stock": ""
+        },
+        {
+          "name": "Вишня Dr. Pepper",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Киви яблоко",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Клубника банан",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Малиновая газировка",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Морс из лесных ягод",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Мята спрайт",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Фруктовый мармелад",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Энергетик черника",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Ягодная жвачка",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Ежевика малина",
+          "stock": "",
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "id": "dark_choir",
+      "categoryId": "liquids",
+      "name": "Bjorn темный хор 80мг",
+      "description": "Крепкая солевая жидкость\nНикотин: 80мг\nОбъём: 30мл",
+      "price": 500,
+      "cashPrice": 500,
+      "stock": 35,
+      "icon": "💧",
+      "location": "Все точки",
+      "image": "AgACAgIAAxkBAAObamtVaEPtyDlzEuVw0ysCy1hkTrgAAjEXaxu7VWBLq65CAAEIDMqFAQADAgADeAADPQQ",
+      "flavors": [
+        {
+          "name": "Арбуз лед",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Голубика лед",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Кислая вишня",
+          "stock": ""
+        },
+        {
+          "name": "Кислое зеленое яблоко",
+          "stock": ""
+        },
+        {
+          "name": "Кислый ягодный микс",
+          "stock": ""
+        },
+        {
+          "name": "Клубничный лимонад",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Малина кислый лед",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Энергетик лед",
+          "stock": ""
+        },
+        {
+          "name": "Ягодный микс ментол",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Ягоды мята",
+          "stock": "",
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "id": "zloy_v2",
+      "categoryId": "liquids",
+      "name": "Bjorn Zloy v2 60мг",
+      "description": "Обновленная версия\nСолевой никотин\nОбъём: 30мл",
+      "price": 450,
+      "cashPrice": 450,
+      "stock": 50,
+      "icon": "💧",
+      "location": "Все точки",
+      "image": "AgACAgIAAxkBAAOdamtVxdn8UIQnb25HDirgFtmUM7AAAjIXaxu7VWBLcq5ARiickicBAAMCAAN4AAM9BA",
+      "flavors": [
+        {
+          "name": "Вишня клубника",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Ежевика",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Клубничный лимонад",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Клубничный холс",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Малиновая газировка",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Морозное яблоко",
+          "stock": ""
+        },
+        {
+          "name": "Мохито",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Смородина малина яблоко",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Черника лимон",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Яблоко виноград",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Яблоко малина",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Ягодный напиток",
+          "stock": "",
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "id": "dota",
+      "categoryId": "liquids",
+      "name": "Дота 50мг",
+      "description": "Популярная солевая жидкость\nСбалансированный вкус\nОбъём: 30мл",
+      "price": 450,
+      "cashPrice": 450,
+      "stock": 45,
+      "icon": "💧",
+      "location": "Все точки",
+      "image": "AgACAgIAAxkBAAOfamtWSwGi8i92uuD85DzCtmpPh7IAAjQXaxu7VWBLGoFiwHtLFbIBAAMCAAN5AAM9BA",
+      "flavors": [
+        {
+          "name": "Арбуз Дыня Бабл-гам",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Арбуз Манго",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Вишня Персик Мята",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Клубника Виноград Мята",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Клубника Земляника Лёд",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Клубника Маракуйя",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Черешня Арбуз",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Черника Грейпфрут",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Яблоко Виноград",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Яблоко Персик",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Кислая клубника-драгонфрут",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Сладко-кислая синяя малина айс",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Ледяной ежевичный монстр",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Смородиновый скитлс",
+          "stock": ""
+        },
+        {
+          "name": "Кислый вишнёвый Ред Булл",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Персик Манго Лит Энерджи",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Ментос Виноград",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Морозная фанта-виноград",
+          "stock": ""
+        },
+        {
+          "name": "Спрайт Черника Малина",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Хубба бубба со вкусом колы",
+          "stock": "",
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "id": "skala",
+      "categoryId": "liquids",
+      "name": "Скала 50мг/20мг",
+      "description": "Крепкая солевая жидкость\nНасыщенный вкус\nОбъём: 30мл",
+      "price": 400,
+      "cashPrice": 400,
+      "stock": 40,
+      "icon": "💧",
+      "location": "Все точки",
+      "image": "AgACAgIAAxkBAAOhamtWet7t87lIV4P_MQ6x2c5FG9cAAjUXaxu7VWBLXT7ZL92I2ZMBAAMCAAN4AAM9BA",
+      "isParent": true,
+      "subProducts": [
+        "skala_50",
+        "skala_20"
+      ]
+    },
+    {
+      "id": "skala_50",
+      "categoryId": "liquids",
+      "name": "Скала 50мг",
+      "description": "Крепкая солевая жидкость\n50мг никотин\nОбъём: 30мл",
+      "price": 400,
+      "cashPrice": 400,
+      "stock": 40,
+      "icon": "💧",
+      "parentId": "skala",
+      "image": "AgACAgIAAxkBAAOhamtWet7t87lIV4P_MQ6x2c5FG9cAAjUXaxu7VWBLXT7ZL92I2ZMBAAMCAAN4AAM9BA",
+      "flavors": [
+        {
+          "name": "Ананас со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Апельсин со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Арбуз со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Банан со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Барбарис со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Виноград со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Вишня со льдом",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Грейпфрут со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Груша со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Дыня со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Ежевика со льдом",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Земляника со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Кактус со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Клубника со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Клюква со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Кола со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Крем-сода со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Лимон-лайм со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Лимонад со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Малина со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Манго со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Мультифрукт со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Персик со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Тархун со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Фейхоа со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Черная смородина со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Черника со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Черника-Грейпфрут со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Шотландский лимонад со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Яблоко со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Ягоды со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Лесные ягоды со льдом",
+          "stock": "",
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "id": "skala_20",
+      "categoryId": "liquids",
+      "name": "Скала 20мг",
+      "description": "Лёгкая солевая жидкость\n20мг никотин\nОбъём: 30мл",
+      "price": 400,
+      "cashPrice": 400,
+      "stock": 40,
+      "icon": "💧",
+      "parentId": "skala",
+      "image": "AgACAgIAAxkBAAOhamtWet7t87lIV4P_MQ6x2c5FG9cAAjUXaxu7VWBLXT7ZL92I2ZMBAAMCAAN4AAM9BA",
+      "flavors": [
+        {
+          "name": "Ананас со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Апельсин со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Арбуз со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Банан со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Барбарис со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Виноград со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Вишня со льдом",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Грейпфрут со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Груша со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Дыня со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Ежевика со льдом",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Земляника со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Кактус со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Клубника со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Клюква со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Кола со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Крем-сода со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Лимон-лайм со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Лимонад со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Малина со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Манго со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Мультифрукт со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Персик со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Тархун со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Фейхоа со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Черная смородина со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Черника со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Черника-Грейпфрут со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Шотландский лимонад со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Яблоко со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Ягоды со льдом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Лесные ягоды со льдом",
+          "stock": "",
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "id": "rick_morty",
+      "categoryId": "liquids",
+      "name": "Рик и морти 50мг",
+      "description": "Яркие необычные вкусы\nСолевой никотин\nОбъём: 30мл",
+      "price": 400,
+      "cashPrice": 400,
+      "stock": 35,
+      "icon": "💧",
+      "location": "Все точки",
+      "image": "AgACAgIAAxkBAAOjamtWlJ9wgApC9Ah6dB3Zj1YO9E8AAjYXaxu7VWBL-mHD7dGYfU4BAAMCAAN5AAM9BA",
+      "isParent": true,
+      "subProducts": [
+        "rick_morty_acid",
+        "rick_morty_ice",
+        "rick_morty_russia"
+      ]
+    },
+    {
+      "id": "rick_morty_acid",
+      "categoryId": "liquids",
+      "name": "Рик и морти BAD ACID 50мг",
+      "description": "Кислая линейка\nСолевой никотин\nОбъём: 30мл",
+      "price": 400,
+      "cashPrice": 400,
+      "stock": 35,
+      "icon": "💧",
+      "parentId": "rick_morty",
+      "image": "AgACAgIAAxkBAAIB6Gpsqmsqqc4WCWRQ5OjQBLJs98sgAAJfHWsbFE5pS1y4VJur7aTyAQADAgADeQADPQQ",
+      "flavors": [
+        {
+          "name": "Виноградный Чупа Чупс",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Вишневая Бомба",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Лесные Ягоды",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Малина Арбуз",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Фруктовый Скитлс",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Червячки Голубика Малина",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Черная Смородина",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Черничная Фанта",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Яблоко Лайм",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Ягодный морс",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Малина Смородина",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Спрайт Арбуз Лайм",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Клубничный Мохито",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Ягодный сок",
+          "stock": "",
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "id": "rick_morty_ice",
+      "categoryId": "liquids",
+      "name": "Рик и морти BAD ICE 50мг",
+      "description": "Ледяная линейка\nСолевой никотин\nОбъём: 30мл",
+      "price": 400,
+      "cashPrice": 400,
+      "stock": 35,
+      "icon": "💧",
+      "parentId": "rick_morty",
+      "image": "AgACAgIAAxkBAAIB6mpsqpJ8o7SL_tzNufql7Ge0rwLnAAJgHWsbFE5pS2IEHBjJpMJkAQADAgADeQADPQQ",
+      "flavors": [
+        {
+          "name": "Виноградная Фанта",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Вишневый морс",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Ежевика Мята",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Малина Лайм",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Ред Булл",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Спрайт",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Фруктовая Жвачка",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Яблоко Черника",
+          "stock": "",
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "id": "rick_morty_russia",
+      "categoryId": "liquids",
+      "name": "Рик и Морти Russia 70мг",
+      "description": "Российская линейка\nСолевой никотин\nОбъём: 30мл",
+      "price": 450,
+      "cashPrice": 450,
+      "stock": 10,
+      "icon": "💧",
+      "parentId": "rick_morty",
+      "image": "AgACAgIAAxkBAAIHsmqAgIFTL2_haoF6Vb4mcxXiJIeAAAL1H2sbTNgBSBXP1wH3yRr8AQADAgADeQADPQQ",
+      "flavors": [
+        {
+          "name": "Арбузный Фреш",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Виноград Киви",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Виноградная Фанта",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Виноградный Энергетик",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Вишнёвый Чупа Чупс",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Лесные Ягоды",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Малина Апельсин",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Малиновое Варенье",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Мармеладные Червячки",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Сибирские Ягоды",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Смородина Голубика",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Фруктовый Скитлс",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Черешня Смородина",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Чёрная Смородина",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Черника Вишня",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Экзотический Микс",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Яблочный Энергетик",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Ягодный Морс",
+          "stock": "",
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "id": "suicide",
+      "categoryId": "liquids",
+      "name": "Самоубийца 70мг",
+      "description": "Ультракрепкая солевая жидкость\nНикотин: 70мг\nОбъём: 30мл",
+      "price": 500,
+      "cashPrice": 500,
+      "stock": 50,
+      "icon": "💧",
+      "location": "Кинотеатр \"Космос\"",
+      "image": "AgACAgIAAxkBAAOlamtW4MuP5oS4zPwL1ZDOYLyXMHAAAjoXaxu7VWBLcbaJg_XA-Q4BAAMCAAN5AAM9BA",
+      "flavors": [
+        {
+          "name": "Ананас кокос лед",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Баблгам",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Виноград лед",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Вишня яблоко",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Голубая малина виноград",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Ежевика малина",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Киви лед",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Кислая клюква лед",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Клубника арбуз",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Клубника черника лед",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Клубничный мохито",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Малина вишня лед",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Малина смородина лед",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Манго лед",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Черная вишня лед",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Черника смородина лед",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Энергетик лайм",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Энергетик малина",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Ягодный микс",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Кислая Конфета",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Кислая Облепиха с Вишней",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Кислая Резинка со Смородиной и Брусникой",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Кислая Слива с Апельсином",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Кислые Леденцы с Виноградом и Алое",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Кислый Вишневый Морс",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Кислый Зеленый Виноград с Киви",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Кислый Скитлс лед",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Кислый Тархун с Земляникой",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Кислый Мятный Лимон с Арбузом",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Кислая малиновая жвачка",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Энергетик со скитлсом",
+          "stock": "",
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "id": "hysterica",
+      "categoryId": "liquids",
+      "name": "Истерика 60мг",
+      "description": "Яркие интенсивные вкусы\nСолевой никотин\nОбъём: 30мл",
+      "price": 400,
+      "cashPrice": 400,
+      "stock": 40,
+      "icon": "💧",
+      "location": "Все точки",
+      "image": "AgACAgIAAxkBAAOnamtXfLpguKxVKTHIIIw6qjBeP4QAAjwXaxu7VWBLGSCU9q3ga64BAAMCAAN5AAM9BA",
+      "flavors": [
+        {
+          "name": "Ананас Ежевика",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Арбузные Леденцы",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Ежевичный Мармелад",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Зелёный Бёрн (Энергетик)",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Земляника Драгонфрут",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Клубника Банан Дыня",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Клубника + Малиновое варенье",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Кола Чупа-Чупс",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Персик Зелёное яблоко",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Черная смородина Груша",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Малиновый Милшейк",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Виноградный Сок",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Лесные Ягоды",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Баблгам Мята",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Манго Маракуйя",
+          "stock": "",
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "id": "podonki",
+      "categoryId": "liquids",
+      "name": "Подонки инферно 50мг",
+      "description": "Крепкая солевая жидкость\nОстрые вкусы\nОбъём: 30мл",
+      "price": 500,
+      "cashPrice": 500,
+      "stock": 35,
+      "icon": "💧",
+      "location": "Все точки",
+      "image": "AgACAgIAAxkBAAOpamtXk0DztFz84UOohhjrPIWnFzoAAj0Xaxu7VWBLLHo5wGhOGC8BAAMCAAN5AAM9BA",
+      "flavors": [
+        {
+          "name": "Арбуз Черника",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Вишня Слива Груша",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Грейпфрут Малина Клубника",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Клубника Банан",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Клубника Вишня",
+          "stock": ""
+        },
+        {
+          "name": "Клубничная Шипучка",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Малина Ежевика",
+          "stock": ""
+        },
+        {
+          "name": "Малина Черника",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Персик",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Цитрусовый микс",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Черника Вишня",
+          "stock": ""
+        },
+        {
+          "name": "Черника Лёд",
+          "stock": "",
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "id": "angry_vape",
+      "categoryId": "liquids",
+      "name": "Angry vape 40мг",
+      "description": "Доступная солевая жидкость\nХорошее качество\nОбъём: 30мл",
+      "price": 350,
+      "cashPrice": 350,
+      "stock": 60,
+      "icon": "💧",
+      "location": "Все точки",
+      "image": "AgACAgIAAxkBAAOramtXwvknv_8Bo0eVMA3h735izewAAkAXaxu7VWBL754ghDMntiEBAAMCAAN5AAM9BA",
+      "flavors": [
+        {
+          "name": "Ананас со сливками",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Черный виноград",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Мармелад с колой и лимоном",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Вишня с лимоном",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Персик с малиной",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Кислые конфеты",
+          "stock": ""
+        },
+        {
+          "name": "Чизкейк с клубникой и бананом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Грейпфрут с малиной",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Манго",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Гранатовый сок",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Клубника",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Клубника, банан и арбуз",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Йогурт с киви",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Йогурт с манго и маракуйей",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Мятная жвачка",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Лимонный мармелад",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Малиновая газировка",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Ягодные леденцы",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Ананасовая газировка",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Малиновый джем",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Клубничный джем",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Апельсиновая газировка",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Жвачка с виноградом",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Зелёное яблоко с вишней",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Энергетик с киви",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Арбузная жвачка",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Яблоко, манго и ананас",
+          "stock": "",
+          "enabled": false
+        },
+        {
+          "name": "Яблоко",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Синяя малина",
+          "stock": "",
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "id": "cartridges",
+      "categoryId": "accessories",
+      "name": "Картриджи 0.6 0.8 0.4",
+      "description": "Сменные картриджи\nДоступны разные сопротивления\nУниверсальные",
+      "price": 300,
+      "cashPrice": 300,
+      "stock": 50,
+      "icon": "📍",
+      "image": "https://via.placeholder.com/400x300/bdc3c7/000?text=Cartridges",
+      "options": [
+        "0.4 Ом",
+        "0.6 Ом",
+        "0.8 Ом"
+      ],
+      "enabled": true
+    },
+    {
+      "id": "aegis_coil",
+      "categoryId": "accessories",
+      "name": "Испар аегис 50-58w",
+      "description": "Испаритель для Aegis\nМощность: 50-58W\nОригинальный",
+      "price": 300,
+      "cashPrice": 300,
+      "stock": 25,
+      "icon": "📍",
+      "image": "https://via.placeholder.com/400x300/7f8c8d/fff?text=Aegis+Coil",
+      "enabled": true
+    },
+    {
+      "id": "pasito_coil",
+      "categoryId": "accessories",
+      "name": "Испар пасито/кнайт K-5 70-90w",
+      "description": "Испаритель для Pasito/Knight\nМощность: 70-90W\nМодель: K-5",
+      "price": 300,
+      "cashPrice": 300,
+      "stock": 20,
+      "icon": "📍",
+      "image": "https://via.placeholder.com/400x300/34495e/fff?text=Pasito+Coil",
+      "enabled": true
+    },
+    {
+      "id": "cotton",
+      "categoryId": "accessories",
+      "name": "Ватки",
+      "description": "Органическая вата для обслуживания\nВысокое качество\nУдобная упаковка",
+      "price": 400,
+      "cashPrice": 400,
+      "stock": 40,
+      "icon": "📍",
+      "image": "AgACAgIAAxkBAAIGLWp5paZzH9rsXY9gnxZ6gC-E8oeCAAL1G2sbp6nQS4ir69MKzRHWAQADAgADeQADPQQ",
+      "flavors": [
+        {
+          "name": "Sultan Cherry",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "African Sunberry",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Sibirskaya Myata",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "Cherry Cola",
+          "stock": "",
+          "enabled": true
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "shaiba",
+      "categoryId": "accessories",
+      "name": "Шайбы",
+      "description": "Никотиновые шайбы\nВыберите линейку\nРазличная крепость",
+      "price": 300,
+      "cashPrice": 300,
+      "stock": 50,
+      "icon": "📍",
+      "isParent": true,
+      "subProducts": [
+        "iceberg_ultra"
+      ],
+      "enabled": true
+    },
+    {
+      "id": "iceberg_ultra",
+      "categoryId": "accessories",
+      "name": "IceBerg Ultra 150мг",
+      "description": "Никотиновые шайбы\nКрепость: 150мг\nДлительный эффект",
+      "price": 300,
+      "cashPrice": 300,
+      "stock": 50,
+      "icon": "📍",
+      "parentId": "shaiba",
+      "image": "AgACAgIAAxkBAAIH9mqBVNDd9cQl821qf0NBpOuVcEBfAAJAG2sbTNgJSMJnZGyFiOZ2AQADAgADeQADPQQ",
+      "flavors": [
+        { "name": "CRANBERRY TEA", "stock": "", "enabled": true },
+        { "name": "CRAZY MIX", "stock": "", "enabled": true },
+        { "name": "DOUBLE MINT", "stock": "", "enabled": true },
+        { "name": "DRAGON FIRE", "stock": "", "enabled": true },
+        { "name": "EMERALD", "stock": "", "enabled": true },
+        { "name": "ENERGY MANGO", "stock": "", "enabled": true },
+        { "name": "HOCKEY", "stock": "", "enabled": true },
+        { "name": "MANDARIN", "stock": "", "enabled": true },
+        { "name": "MENTHOL", "stock": "", "enabled": true },
+        { "name": "MULLED WINE", "stock": "", "enabled": true },
+        { "name": "RASPBERRY TEA", "stock": "", "enabled": true },
+        { "name": "SOUR BERRIES", "stock": "", "enabled": true },
+        { "name": "STRAWBERRY POMEGRANATE", "stock": "", "enabled": true },
+        { "name": "SWEET MINT", "stock": "", "enabled": true }
+      ],
+      "enabled": true
+    }
+  ]
+}

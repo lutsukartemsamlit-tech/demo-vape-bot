@@ -1,0 +1,8 @@
+{
+  "name": "miniapp",
+  "version": "1.0.0",
+  "description": "Telegram Mini App для магазина",
+  "dependencies": {
+    "@upstash/redis": "^1.38.2"
+  }
+}

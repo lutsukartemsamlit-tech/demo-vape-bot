@@ -1,0 +1,35 @@
+{
+  "name": "telegram-shop-bot",
+  "version": "1.0.0",
+  "description": "Telegram bot for online shop",
+  "main": "src/bot.js",
+  "engines": {
+    "node": ">=18.x"
+  },
+  "scripts": {
+    "start": "node src/bot.js",
+    "dev": "nodemon src/bot.js",
+    "server": "node server.js",
+    "server:dev": "nodemon server.js",
+    "tunnel": "node start_tunnel.js"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "shop"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@upstash/redis": "^1.38.2",
+    "@vercel/kv": "^3.0.0",
+    "dotenv": "^16.4.5",
+    "https-proxy-agent": "^9.1.0",
+    "node-telegram-bot-api": "^0.66.0",
+    "socks-proxy-agent": "^10.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0",
+    "vercel": "^58.4.4"
+  }
+}

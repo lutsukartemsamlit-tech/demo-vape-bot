@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Admin - PuffNow_63</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <div class="app">
+    <!-- Экран входа -->
+    <div class="screen active" id="screen-login">
+      <div class="screen-header">
+        <h1>🔐 Админ-панель</h1>
+      </div>
+      <div class="screen-content">
+        <div style="padding: 20px;">
+          <div class="form-label">Пароль администратора:</div>
+          <input type="password" class="form-input" id="admin-password" placeholder="Введите пароль">
+          <button class="submit-btn" onclick="login()" style="margin-top: 20px;">Войти</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Главный экран админки -->
+    <div class="screen" id="screen-admin-main">
+      <div class="screen-header">
+        <h1>⚙️ Управление</h1>
+      </div>
+      <div class="screen-content">
+        <div class="categories-grid" id="admin-categories"></div>
+      </div>
+    </div>
+
+    <!-- Экран товаров категории -->
+    <div class="screen" id="screen-admin-products">
+      <div class="screen-header">
+        <button class="back-btn" onclick="showAdminMain()">←</button>
+        <h1 id="admin-category-title"></h1>
+      </div>
+      <div class="screen-content">
+        <div class="products-list" id="admin-products-list"></div>
+      </div>
+    </div>
+
+    <!-- Экран управления вкусами -->
+    <div class="screen" id="screen-admin-flavors">
+      <div class="screen-header">
+        <button class="back-btn" onclick="goBackAdmin()">←</button>
+        <h1 id="admin-product-title"></h1>
+      </div>
+      <div class="screen-content" id="admin-flavors-content"></div>
+    </div>
+  </div>
+
+  <script src="admin.v4.js?v=1786284792"></script>
+</body>
+</html>
