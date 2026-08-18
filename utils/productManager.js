@@ -3,6 +3,36 @@ const path = require('path');
 
 const PRODUCTS_FILE = path.join(__dirname, '../data/products.js');
 
+// Redis client (если доступен)
+let redis = null;
+try {
+  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    const { Redis } = require('@upstash/redis');
+    redis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    });
+    console.log('✅ Redis подключен');
+  }
+} catch (e) {
+  console.log('⚠️ Redis недоступен, используется локальное хранилище');
+}
+
+/**
+ * Сохраняет товары в Redis
+ */
+async function saveToRedis(products) {
+  if (!redis) return false;
+  try {
+    await redis.set('products', JSON.stringify(products));
+    console.log('✅ Товары сохранены в Redis');
+    return true;
+  } catch (e) {
+    console.error('❌ Ошибка сохранения в Redis:', e);
+    return false;
+  }
+}
+
 /**
  * Читает текущий файл products.js и возвращает массивы категорий и товаров
  */
@@ -43,6 +73,9 @@ module.exports = { categories, products };
     
     // Инвалидируем кеш require чтобы изменения подтянулись
     delete require.cache[require.resolve('../data/products.js')];
+    
+    // Сохраняем в Redis (асинхронно, не ждем результата)
+    saveToRedis(products).catch(err => console.error('Redis save error:', err));
     
     return true;
   } catch (e) {
