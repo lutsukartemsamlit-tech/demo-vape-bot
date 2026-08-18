@@ -7,6 +7,7 @@ const { products, categories } = require('../data/products');
 const { saveOrder, getOrders, clearOrders } = require('../utils/storage');
 const { formatPrice, generateOrderId } = require('../utils/helpers');
 const { getReviews, saveReview, deleteReview, getStats, hasRecentReview } = require('../utils/reviews');
+const { addProduct } = require('../utils/productManager');
 
 const token = process.env.BOT_TOKEN;
 const adminId = process.env.ADMIN_ID;
@@ -76,6 +77,9 @@ const userCarts = {};
 
 // Хранилище состояний для ввода отзыва: { userId: { step: 'rating'|'text', rating: N, orderId } }
 const reviewState = {};
+
+// Хранилище состояний для добавления товара: { userId: { step: 'name'|'price'|'description'|'flavors', data: {...} } }
+const addProductState = {};
 
 // Подключаем модуль чата
 const chat = require('../utils/chat');
@@ -148,6 +152,13 @@ bot.onText(/\/cancel/, (msg) => {
   const mainMenuObj = buildMainMenu(WEBAPP_URL, userId);
   const adminMenuObj = buildAdminMenu(WEBAPP_URL, userId);
 
+  // Отмена добавления товара
+  if (addProductState[userId]) {
+    delete addProductState[userId];
+    bot.sendMessage(chatId, '❌ Добавление товара отменено', adminMenuObj);
+    return;
+  }
+
   if (chat.isAdminInReplyMode(userId)) {
     chat.clearAdminReplyMode(userId);
     bot.sendMessage(chatId, '❌ Режим ответа отменён', isAdminUser ? adminMenuObj : mainMenuObj);
@@ -205,11 +216,68 @@ bot.onText(/\/chats/, (msg) => {
   });
 });
 
+// Команда для админов - добавить жидкость
+bot.onText(/\/add_liquid/, (msg) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from.id;
+  
+  if (!isAdmin(userId)) {
+    bot.sendMessage(chatId, '❌ Эта команда доступна только администраторам');
+    return;
+  }
+  
+  // Инициализируем состояние
+  addProductState[userId] = {
+    step: 'name',
+    data: {
+      categoryId: 'liquids',
+      icon: '💧',
+      stock: 50
+    }
+  };
+  
+  bot.sendMessage(chatId, 
+    '📝 *Добавление жидкости*\n\n' +
+    'Введите название жидкости (например: "Annima Love Gold Edition 80мг")\n\n' +
+    'Для отмены используйте /cancel',
+    { parse_mode: 'Markdown' }
+  );
+});
+
 // Команда для получения file_id фото
 bot.on('photo', async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
   const photo = msg.photo[msg.photo.length - 1];
+
+  // Если админ добавляет фото для нового товара
+  if (addProductState[userId] && addProductState[userId].step === 'image') {
+    const state = addProductState[userId];
+    state.data.image = photo.file_id;
+    state.data.location = 'Все точки';
+
+    // Сохраняем товар
+    const result = addProduct(state.data);
+    
+    delete addProductState[userId];
+
+    if (result.success) {
+      const summary = 
+        `✅ *Товар успешно добавлен!*\n\n` +
+        `📦 Название: ${state.data.name}\n` +
+        `💰 Цена: ${formatPrice(state.data.price)}\n` +
+        `🎨 Вкусов: ${state.data.flavors.length}\n` +
+        `🆔 ID: \`${result.product.id}\``;
+
+      bot.sendMessage(chatId, summary, {
+        parse_mode: 'Markdown',
+        ...buildAdminMenu(WEBAPP_URL, userId)
+      });
+    } else {
+      bot.sendMessage(chatId, `❌ Ошибка сохранения: ${result.error}`, buildAdminMenu(WEBAPP_URL, userId));
+    }
+    return;
+  }
 
   // Если пользователь в шаге отправки фото для отзыва
   if (reviewState[userId] && reviewState[userId].step === 'photo') {
@@ -284,6 +352,76 @@ bot.on('message', async (msg) => {
   if (!(await isSubscribed(userId))) {
     sendSubscribeMessage(chatId);
     return;
+  }
+
+  // ========== ОБРАБОТКА ДОБАВЛЕНИЯ ТОВАРА (для админов) ==========
+  if (addProductState[userId]) {
+    const state = addProductState[userId];
+    const adminMenuObj = buildAdminMenu(WEBAPP_URL, userId);
+
+    if (state.step === 'name') {
+      state.data.name = text;
+      state.step = 'price';
+      bot.sendMessage(chatId, 
+        `✅ Название: *${text}*\n\n` +
+        `Теперь введите цену в рублях (например: 450)`,
+        { parse_mode: 'Markdown' }
+      );
+      return;
+    }
+
+    if (state.step === 'price') {
+      const price = parseInt(text);
+      if (isNaN(price) || price <= 0) {
+        bot.sendMessage(chatId, '❌ Неверный формат цены. Введите число (например: 450)');
+        return;
+      }
+      state.data.price = price;
+      state.data.cashPrice = price;
+      state.step = 'description';
+      bot.sendMessage(chatId,
+        `✅ Цена: ${formatPrice(price)}\n\n` +
+        `Введите описание (например: "Крепкая солевая жидкость\\nНикотин: 80мг\\nОбъём: 30мл")`,
+        { parse_mode: 'Markdown' }
+      );
+      return;
+    }
+
+    if (state.step === 'description') {
+      state.data.description = text;
+      state.step = 'flavors';
+      bot.sendMessage(chatId,
+        `✅ Описание сохранено\n\n` +
+        `Теперь введите вкусы через запятую (например: "Арбуз лед, Манго, Клубника")`,
+        { parse_mode: 'Markdown' }
+      );
+      return;
+    }
+
+    if (state.step === 'flavors') {
+      const flavors = text.split(',').map(f => f.trim()).filter(f => f.length > 0);
+      
+      if (flavors.length === 0) {
+        bot.sendMessage(chatId, '❌ Укажите хотя бы один вкус');
+        return;
+      }
+
+      state.data.flavors = flavors.map(name => ({ name, stock: '', enabled: true }));
+      state.step = 'image';
+
+      bot.sendMessage(chatId,
+        `✅ Добавлено вкусов: ${flavors.length}\n\n` +
+        `Теперь отправьте фото товара или нажмите "Пропустить"`,
+        {
+          reply_markup: {
+            inline_keyboard: [[
+              { text: '➡️ Пропустить фото', callback_data: 'skip_product_image' }
+            ]]
+          }
+        }
+      );
+      return;
+    }
   }
 
   // Если АДМИН в режиме ответа — пересылаем его сообщение пользователю
@@ -1747,6 +1885,37 @@ bot.on('callback_query', async (query) => {
       });
     } else {
       bot.answerCallbackQuery(query.id, { text: '❌ Вы ещё не подписались на канал!', show_alert: true });
+    }
+    return;
+  }
+
+  // Пропустить добавление фото товара
+  if (data === 'skip_product_image') {
+    if (addProductState[userId] && addProductState[userId].step === 'image') {
+      const state = addProductState[userId];
+      state.data.location = 'Все точки';
+
+      // Сохраняем товар без фото
+      const result = addProduct(state.data);
+      
+      delete addProductState[userId];
+
+      if (result.success) {
+        const summary = 
+          `✅ *Товар успешно добавлен!*\n\n` +
+          `📦 Название: ${state.data.name}\n` +
+          `💰 Цена: ${formatPrice(state.data.price)}\n` +
+          `🎨 Вкусов: ${state.data.flavors.length}\n` +
+          `🆔 ID: \`${result.product.id}\``;
+
+        bot.deleteMessage(chatId, query.message.message_id).catch(() => {});
+        bot.sendMessage(chatId, summary, {
+          parse_mode: 'Markdown',
+          ...buildAdminMenu(WEBAPP_URL, userId)
+        });
+      } else {
+        bot.answerCallbackQuery(query.id, { text: `❌ ${result.error}`, show_alert: true });
+      }
     }
     return;
   }
