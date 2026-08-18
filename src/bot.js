@@ -3,7 +3,6 @@
 const dns = require('dns');
 dns.setDefaultResultOrder('ipv4first');
 const TelegramBot = require('node-telegram-bot-api');
-const { SocksProxyAgent } = require('socks-proxy-agent');
 const { products, categories } = require('../data/products');
 const { saveOrder, getOrders, clearOrders } = require('../utils/storage');
 const { formatPrice, generateOrderId } = require('../utils/helpers');
@@ -12,7 +11,6 @@ const { getReviews, saveReview, deleteReview, getStats, hasRecentReview } = requ
 const token = process.env.BOT_TOKEN;
 const adminId = process.env.ADMIN_ID;
 const adminIds = process.env.ADMIN_IDS ? process.env.ADMIN_IDS.split(',').map(id => id.trim()) : [adminId];
-const proxyUrl = process.env.PROXY_URL;
 const WEBAPP_URL = process.env.WEBAPP_URL || ''; // URL вашего Mini App
 const REQUIRED_CHANNEL = process.env.REQUIRED_CHANNEL || ''; // Username или ID канала для обязательной подписки
 
@@ -63,19 +61,13 @@ if (!token) {
   process.exit(1);
 }
 
-// Настройка прокси и ускоренного опроса
+// Настройка бота с ускоренным опросом
 const botOptions = { 
   polling: {
     interval: 200,
     params: { timeout: 10 }
   } 
 };
-
-if (proxyUrl) {
-  console.log('Используется прокси:', proxyUrl);
-  const agent = new SocksProxyAgent('socks5://'+ proxyUrl);
-  botOptions.request = { agent };
-}
 
 const bot = new TelegramBot(token, botOptions);
 
