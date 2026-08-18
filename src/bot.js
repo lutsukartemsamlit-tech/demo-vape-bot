@@ -3,11 +3,68 @@
 const dns = require('dns');
 dns.setDefaultResultOrder('ipv4first');
 const TelegramBot = require('node-telegram-bot-api');
-const { products, categories } = require('../data/products');
 const { saveOrder, getOrders, clearOrders } = require('../utils/storage');
 const { formatPrice, generateOrderId } = require('../utils/helpers');
 const { getReviews, saveReview, deleteReview, getStats, hasRecentReview } = require('../utils/reviews');
 const { addProduct } = require('../utils/productManager');
+
+// Redis client для загрузки товаров
+let redis = null;
+let products = [];
+let categories = [];
+
+// Инициализация Redis и загрузка товаров
+async function loadProductsFromRedis() {
+  try {
+    if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+      const { Redis } = require('@upstash/redis');
+      redis = new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN,
+      });
+      
+      const cachedData = await redis.get('products');
+      
+      if (cachedData) {
+        const parsedData = typeof cachedData === 'string' ? JSON.parse(cachedData) : cachedData;
+        
+        // Redis хранит только массив products, categories берем из файла
+        if (Array.isArray(parsedData)) {
+          products = parsedData;
+          console.log('✅ Товары загружены из Redis:', products.length);
+        } else {
+          console.log('⚠️ Неверный формат данных в Redis, загружаем из файла');
+          const fileData = require('../data/products');
+          products = fileData.products;
+          categories = fileData.categories;
+        }
+      } else {
+        console.log('⚠️ Нет данных в Redis, загружаем из файла');
+        const fileData = require('../data/products');
+        products = fileData.products;
+        categories = fileData.categories;
+        // Сохраняем в Redis
+        await redis.set('products', JSON.stringify(products));
+      }
+    } else {
+      console.log('⚠️ Redis не настроен, загружаем из файла');
+      const fileData = require('../data/products');
+      products = fileData.products;
+      categories = fileData.categories;
+    }
+  } catch (e) {
+    console.error('❌ Ошибка загрузки из Redis:', e);
+    const fileData = require('../data/products');
+    products = fileData.products;
+    categories = fileData.categories;
+  }
+  
+  // Загружаем categories из файла если еще не загружены
+  if (categories.length === 0) {
+    const fileData = require('../data/products');
+    categories = fileData.categories;
+  }
+}
 
 const token = process.env.BOT_TOKEN;
 const adminId = process.env.ADMIN_ID;
@@ -71,6 +128,13 @@ const botOptions = {
 };
 
 const bot = new TelegramBot(token, botOptions);
+
+// Загружаем товары из Redis при старте
+loadProductsFromRedis().then(() => {
+  console.log('✅ Бот запущен, товары загружены');
+}).catch(err => {
+  console.error('❌ Ошибка загрузки товаров:', err);
+});
 
 // Хранилище корзин пользователей
 const userCarts = {};
@@ -397,8 +461,8 @@ bot.on('message', async (msg) => {
 
     // Добавление вкусов к существующей жидкости
     if (state.step === 'add_flavors') {
-      const { updateProduct } = require('../utils/productManager');
-      const { products } = require('../data/products');
+      // Перезагружаем товары из Redis чтобы получить актуальные данные
+      await loadProductsFromRedis();
       
       const product = products.find(p => p.id === state.productId);
       if (!product) {
@@ -421,24 +485,38 @@ bot.on('message', async (msg) => {
         ...newFlavors.map(name => ({ name, stock: '', enabled: true }))
       ];
       
-      const result = updateProduct(state.productId, { flavors: updatedFlavors });
+      // Обновляем товар в глобальном массиве
+      const productIndex = products.findIndex(p => p.id === state.productId);
+      if (productIndex !== -1) {
+        products[productIndex].flavors = updatedFlavors;
+      }
+      
+      // Сохраняем в Redis
+      if (redis) {
+        try {
+          await redis.set('products', JSON.stringify(products));
+          console.log('✅ Товары обновлены в Redis');
+        } catch (e) {
+          console.error('❌ Ошибка сохранения в Redis:', e);
+        }
+      }
+      
+      // Также сохраняем через productManager (для fallback в файл)
+      const { updateProduct } = require('../utils/productManager');
+      updateProduct(state.productId, { flavors: updatedFlavors });
       
       delete addProductState[userId];
       
-      if (result.success) {
-        bot.sendMessage(chatId,
-          `✅ *Вкусы добавлены!*\n\n` +
-          `💧 Жидкость: ${state.productName}\n` +
-          `🎨 Добавлено вкусов: ${newFlavors.length}\n` +
-          `📊 Всего вкусов: ${updatedFlavors.length}`,
-          {
-            parse_mode: 'Markdown',
-            ...adminMenuObj
-          }
-        );
-      } else {
-        bot.sendMessage(chatId, `❌ Ошибка: ${result.error}`, adminMenuObj);
-      }
+      bot.sendMessage(chatId,
+        `✅ *Вкусы добавлены!*\n\n` +
+        `💧 Жидкость: ${state.productName}\n` +
+        `🎨 Добавлено вкусов: ${newFlavors.length}\n` +
+        `📊 Всего вкусов: ${updatedFlavors.length}`,
+        {
+          parse_mode: 'Markdown',
+          ...adminMenuObj
+        }
+      );
       return;
     }
 
