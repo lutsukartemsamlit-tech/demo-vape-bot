@@ -244,6 +244,42 @@ bot.onText(/\/add_liquid/, (msg) => {
   );
 });
 
+// Команда для админов - добавить вкусы к существующей жидкости
+bot.onText(/\/add_flavors/, (msg) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from.id;
+  
+  if (!isAdmin(userId)) {
+    bot.sendMessage(chatId, '❌ Эта команда доступна только администраторам');
+    return;
+  }
+  
+  // Получаем список жидкостей
+  const { products } = require('../data/products');
+  const liquids = products.filter(p => p.categoryId === 'liquids');
+  
+  if (liquids.length === 0) {
+    bot.sendMessage(chatId, '❌ Нет жидкостей в каталоге');
+    return;
+  }
+  
+  // Показываем список жидкостей для выбора
+  const keyboard = liquids.slice(0, 20).map(liquid => [{
+    text: liquid.name,
+    callback_data: `addflavor_${liquid.id}`
+  }]);
+  
+  bot.sendMessage(chatId,
+    '💧 *Выберите жидкость для добавления вкусов:*',
+    {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: keyboard
+      }
+    }
+  );
+});
+
 // Команда для получения file_id фото
 bot.on('photo', async (msg) => {
   const chatId = msg.chat.id;
@@ -358,6 +394,53 @@ bot.on('message', async (msg) => {
   if (addProductState[userId]) {
     const state = addProductState[userId];
     const adminMenuObj = buildAdminMenu(WEBAPP_URL, userId);
+
+    // Добавление вкусов к существующей жидкости
+    if (state.step === 'add_flavors') {
+      const { updateProduct } = require('../utils/productManager');
+      const { products } = require('../data/products');
+      
+      const product = products.find(p => p.id === state.productId);
+      if (!product) {
+        bot.sendMessage(chatId, '❌ Товар не найден', adminMenuObj);
+        delete addProductState[userId];
+        return;
+      }
+      
+      const newFlavors = text.split(',').map(f => f.trim()).filter(f => f.length > 0);
+      
+      if (newFlavors.length === 0) {
+        bot.sendMessage(chatId, '❌ Укажите хотя бы один вкус');
+        return;
+      }
+      
+      // Добавляем новые вкусы к существующим
+      const currentFlavors = product.flavors || [];
+      const updatedFlavors = [
+        ...currentFlavors,
+        ...newFlavors.map(name => ({ name, stock: '', enabled: true }))
+      ];
+      
+      const result = updateProduct(state.productId, { flavors: updatedFlavors });
+      
+      delete addProductState[userId];
+      
+      if (result.success) {
+        bot.sendMessage(chatId,
+          `✅ *Вкусы добавлены!*\n\n` +
+          `💧 Жидкость: ${state.productName}\n` +
+          `🎨 Добавлено вкусов: ${newFlavors.length}\n` +
+          `📊 Всего вкусов: ${updatedFlavors.length}`,
+          {
+            parse_mode: 'Markdown',
+            ...adminMenuObj
+          }
+        );
+      } else {
+        bot.sendMessage(chatId, `❌ Ошибка: ${result.error}`, adminMenuObj);
+      }
+      return;
+    }
 
     if (state.step === 'name') {
       state.data.name = text;
@@ -1917,6 +2000,33 @@ bot.on('callback_query', async (query) => {
         bot.answerCallbackQuery(query.id, { text: `❌ ${result.error}`, show_alert: true });
       }
     }
+    return;
+  }
+
+  // Выбор жидкости для добавления вкусов
+  if (data.startsWith('addflavor_')) {
+    const productId = data.replace('addflavor_', '');
+    const product = products.find(p => p.id === productId);
+    
+    if (!product) {
+      bot.answerCallbackQuery(query.id, { text: '❌ Товар не найден', show_alert: true });
+      return;
+    }
+    
+    // Инициализируем состояние для добавления вкусов
+    addProductState[userId] = {
+      step: 'add_flavors',
+      productId: productId,
+      productName: product.name
+    };
+    
+    bot.deleteMessage(chatId, query.message.message_id).catch(() => {});
+    bot.sendMessage(chatId,
+      `💧 *${product.name}*\n\n` +
+      `Введите новые вкусы через запятую (например: "Манго лед, Клубника, Дыня")\n\n` +
+      `Для отмены используйте /cancel`,
+      { parse_mode: 'Markdown' }
+    );
     return;
   }
 
