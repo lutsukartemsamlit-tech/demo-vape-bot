@@ -1,5 +1,7 @@
 # PuffNow_63 — Telegram Bot
 
+Бот для магазина вейп-продукции с админ-панелью.
+
 ## Деплой на Render.com (24/7)
 
 ### Шаг 1 — Загрузи код на GitHub
@@ -31,7 +33,7 @@ git push -u origin main
 | Name | tg-bot |
 | Runtime | Node |
 | Build Command | `npm install` |
-| Start Command | `node src/bot.js` |
+| Start Command | `![alt text](image.png)` |
 
 ---
 
