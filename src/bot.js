@@ -1705,6 +1705,7 @@ function showAdminFlavors(chatId, productId, messageId = null) {
   // Кнопка "Отключить все" только для жидкостей
   if (product.categoryId === 'liquids') {
     keyboard.push([{ text: '🚫 Отключить все', callback_data: `admin_disableall_${product.id}` }]);
+    keyboard.push([{ text: '➕ Добавить вкусы', callback_data: `admin_addflavors_${product.id}` }]);
   }
 
   keyboard.push([{ text: '⬅️ Назад', callback_data: `admin_product_${product.id}` }]);
@@ -2214,6 +2215,31 @@ bot.on('callback_query', async (query) => {
     } else {
       bot.answerCallbackQuery(query.id, { text: '❌ Ошибка' });
     }
+  } else if (data.startsWith('admin_addflavors_')) {
+    // Кнопка "Добавить вкусы" из админ-панели
+    const productId = data.replace('admin_addflavors_', '');
+    const product = products.find(p => p.id === productId);
+    
+    if (!product) {
+      bot.answerCallbackQuery(query.id, { text: '❌ Товар не найден', show_alert: true });
+      return;
+    }
+    
+    // Инициализируем состояние для добавления вкусов
+    addProductState[userId] = {
+      step: 'add_flavors',
+      productId: productId,
+      productName: product.name
+    };
+    
+    bot.deleteMessage(chatId, query.message.message_id).catch(() => {});
+    bot.sendMessage(chatId,
+      `💧 *${product.name}*\n\n` +
+      `Введите новые вкусы через запятую (например: "Манго лед, Клубника, Дыня")\n\n` +
+      `Для отмены используйте /cancel`,
+      { parse_mode: 'Markdown' }
+    );
+    bot.answerCallbackQuery(query.id);
   } else if (data.startsWith('admin_toggle_')) {
     try {
       const toggleData = data.replace('admin_toggle_', '');
