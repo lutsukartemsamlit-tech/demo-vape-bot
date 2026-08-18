@@ -1,27 +1,4 @@
 {
-  "success": true,
-  "categories": [
-    {
-      "id": "disposable",
-      "name": "Одноразки/подики",
-      "icon": "❤️‍🔥"
-    },
-    {
-      "id": "liquids",
-      "name": "Жидкости",
-      "icon": "💧"
-    },
-    {
-      "id": "accessories",
-      "name": "Расходники",
-      "icon": "📍"
-    },
-    {
-      "id": "energy",
-      "name": "Энергетики",
-      "icon": "🧃"
-    }
-  ],
   "products": [
     {
       "id": "xros5",
@@ -1546,27 +1523,27 @@
         {
           "name": "Арбузный Фреш",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Виноград Киви",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Виноградная Фанта",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Виноградный Энергетик",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Вишнёвый Чупа Чупс",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Лесные Ягоды",
@@ -1576,17 +1553,17 @@
         {
           "name": "Малина Апельсин",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Малиновое Варенье",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Мармеладные Червячки",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Сибирские Ягоды",
@@ -1596,17 +1573,17 @@
         {
           "name": "Смородина Голубика",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Фруктовый Скитлс",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Черешня Смородина",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Чёрная Смородина",
@@ -1616,12 +1593,12 @@
         {
           "name": "Черника Вишня",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Экзотический Микс",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Яблочный Энергетик",
@@ -1631,7 +1608,7 @@
         {
           "name": "Ягодный Морс",
           "stock": "",
-          "enabled": true
+          "enabled": false
         }
       ]
     },
@@ -1650,147 +1627,147 @@
         {
           "name": "Ананас кокос лед",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Баблгам",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Виноград лед",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Вишня яблоко",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Голубая малина виноград",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Ежевика малина",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Киви лед",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Кислая клюква лед",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Клубника арбуз",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Клубника черника лед",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Клубничный мохито",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Малина вишня лед",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Малина смородина лед",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Манго лед",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Черная вишня лед",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Черника смородина лед",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Энергетик лайм",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Энергетик малина",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Ягодный микс",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Кислая Конфета",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Кислая Облепиха с Вишней",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Кислая Резинка со Смородиной и Брусникой",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Кислая Слива с Апельсином",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Кислые Леденцы с Виноградом и Алое",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Кислый Вишневый Морс",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Кислый Зеленый Виноград с Киви",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Кислый Скитлс лед",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Кислый Тархун с Земляникой",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Кислый Мятный Лимон с Арбузом",
           "stock": "",
-          "enabled": true
+          "enabled": false
         },
         {
           "name": "Кислая малиновая жвачка",
@@ -2112,13 +2089,11 @@
         },
         {
           "name": "Яблоко",
-          "stock": "",
-          "enabled": true
+          "stock": ""
         },
         {
           "name": "Синяя малина",
-          "stock": "",
-          "enabled": true
+          "stock": ""
         }
       ]
     },
@@ -2172,7 +2147,7 @@
       "cashPrice": 400,
       "stock": 40,
       "icon": "📍",
-      "image": "AgACAgIAAxkBAAIGLWp5paZzH9rsXY9gnxZ6gC-E8oeCAAL1G2sbp6nQS4ir69MKzRHWAQADAgADeQADPQQ",
+      "image": "AgACAgIAAxkBAAIOp2qEiQpTP9m1i5GIYC3GloWZ21CaAAIWGmsb54opSD2Z39RvSEB7AQADAgADeQADPQQ",
       "flavors": [
         {
           "name": "Sultan Cherry",
@@ -2202,10 +2177,11 @@
       "categoryId": "accessories",
       "name": "Шайбы",
       "description": "Никотиновые шайбы\nВыберите линейку\nРазличная крепость",
-      "price": 300,
-      "cashPrice": 300,
+      "price": 400,
+      "cashPrice": 400,
       "stock": 50,
       "icon": "📍",
+      "image": "AgACAgIAAxkBAAIOqmqEiSAwW8M51zvpGNP41KWREmkoAAIXGmsb54opSJX156reF1b9AQADAgADeQADPQQ",
       "isParent": true,
       "subProducts": [
         "iceberg_ultra"
@@ -2217,29 +2193,107 @@
       "categoryId": "accessories",
       "name": "IceBerg Ultra 150мг",
       "description": "Никотиновые шайбы\nКрепость: 150мг\nДлительный эффект",
-      "price": 300,
-      "cashPrice": 300,
+      "price": 400,
+      "cashPrice": 400,
       "stock": 50,
       "icon": "📍",
       "parentId": "shaiba",
       "image": "AgACAgIAAxkBAAIH9mqBVNDd9cQl821qf0NBpOuVcEBfAAJAG2sbTNgJSMJnZGyFiOZ2AQADAgADeQADPQQ",
       "flavors": [
-        { "name": "CRANBERRY TEA", "stock": "", "enabled": true },
-        { "name": "CRAZY MIX", "stock": "", "enabled": true },
-        { "name": "DOUBLE MINT", "stock": "", "enabled": true },
-        { "name": "DRAGON FIRE", "stock": "", "enabled": true },
-        { "name": "EMERALD", "stock": "", "enabled": true },
-        { "name": "ENERGY MANGO", "stock": "", "enabled": true },
-        { "name": "HOCKEY", "stock": "", "enabled": true },
-        { "name": "MANDARIN", "stock": "", "enabled": true },
-        { "name": "MENTHOL", "stock": "", "enabled": true },
-        { "name": "MULLED WINE", "stock": "", "enabled": true },
-        { "name": "RASPBERRY TEA", "stock": "", "enabled": true },
-        { "name": "SOUR BERRIES", "stock": "", "enabled": true },
-        { "name": "STRAWBERRY POMEGRANATE", "stock": "", "enabled": true },
-        { "name": "SWEET MINT", "stock": "", "enabled": true }
+        {
+          "name": "CRANBERRY TEA",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "CRAZY MIX",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "DOUBLE MINT",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "DRAGON FIRE",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "EMERALD",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "ENERGY MANGO",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "HOCKEY",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "MANDARIN",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "MENTHOL",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "MULLED WINE",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "RASPBERRY TEA",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "SOUR BERRIES",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "STRAWBERRY POMEGRANATE",
+          "stock": "",
+          "enabled": true
+        },
+        {
+          "name": "SWEET MINT",
+          "stock": "",
+          "enabled": true
+        }
       ],
       "enabled": true
+    }
+  ],
+  "categories": [
+    {
+      "id": "disposable",
+      "name": "Одноразки/подики",
+      "icon": "❤️‍🔥"
+    },
+    {
+      "id": "liquids",
+      "name": "Жидкости",
+      "icon": "💧"
+    },
+    {
+      "id": "accessories",
+      "name": "Расходники",
+      "icon": "📍"
+    },
+    {
+      "id": "energy",
+      "name": "Энергетики",
+      "icon": "🧃"
     }
   ]
 }

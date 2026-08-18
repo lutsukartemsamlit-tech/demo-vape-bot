@@ -2171,7 +2171,7 @@ const products = [
     "cashPrice": 400,
     "stock": 40,
     "icon": "📍",
-    "image": "AgACAgIAAxkBAAIGLWp5paZzH9rsXY9gnxZ6gC-E8oeCAAL1G2sbp6nQS4ir69MKzRHWAQADAgADeQADPQQ",
+    "image": "AgACAgIAAxkBAAIOp2qEiQpTP9m1i5GIYC3GloWZ21CaAAIWGmsb54opSD2Z39RvSEB7AQADAgADeQADPQQ",
     "flavors": [
       {
         "name": "Sultan Cherry",
@@ -2205,6 +2205,7 @@ const products = [
     "cashPrice": 400,
     "stock": 50,
     "icon": "📍",
+    "image": "AgACAgIAAxkBAAIOqmqEiSAwW8M51zvpGNP41KWREmkoAAIXGmsb54opSJX156reF1b9AQADAgADeQADPQQ",
     "isParent": true,
     "subProducts": [
       "iceberg_ultra"
