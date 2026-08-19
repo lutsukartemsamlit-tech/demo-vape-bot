@@ -1837,10 +1837,17 @@ function showAdminFlavors(chatId, productId, messageId = null) {
     if (flavorData.stock) text += ` — ${flavorData.stock}`;
     text += `\n`;
 
-    keyboard.push([{ 
-      text: buttonText, 
-      callback_data: `admin_toggle_${product.id}_${index}` 
-    }]);
+    // Кнопка вкл/выкл + кнопка удаления рядом
+    keyboard.push([
+      { 
+        text: buttonText, 
+        callback_data: `admin_toggle_${product.id}_${index}` 
+      },
+      {
+        text: '🗑️',
+        callback_data: `admin_deleteflavor_${product.id}_${index}`
+      }
+    ]);
   });
 
   // Кнопка "Отключить все" только для жидкостей
@@ -2025,7 +2032,50 @@ function toggleFlavor(productId, flavorIndex) {
     console.log(`✅ Сохранено в боте: ${productId}, вкус ${flavorIndex}`);
   } catch(e) { console.error('Save products error:', e.message); }
   
+  // Синхронизируем с Redis в фоне (не блокируем)
+  if (redis) {
+    redis.set('products', JSON.stringify({ products, categories }))
+      .then(() => console.log('✅ Redis обновлён после toggle вкуса'))
+      .catch(e => console.error('❌ Ошибка Redis при toggle:', e.message));
+  }
+
   return true;
+}
+
+// Удалить вкус и синхронизировать с Redis
+async function deleteFlavor(productId, flavorIndex) {
+  const product = products.find(p => p.id === productId);
+  if (!product || !product.flavors || isNaN(flavorIndex) || !product.flavors[flavorIndex]) {
+    return { success: false, error: 'Вкус не найден' };
+  }
+
+  const deletedFlavor = product.flavors.splice(flavorIndex, 1)[0];
+  const deletedFlavorName = typeof deletedFlavor === 'string' ? deletedFlavor : deletedFlavor.name;
+
+  // Сохраняем в файл data/products.js
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const contentJs = '// Категории товаров\nconst categories = ' + JSON.stringify(categories, null, 2) + ';\n\n// Товары\nconst products = ' + JSON.stringify(products, null, 2) + ';\n\nmodule.exports = { products, categories };\n';
+    fs.writeFileSync(path.join(__dirname, '..', 'data', 'products.js'), contentJs, 'utf8');
+    console.log(`✅ Вкус "${deletedFlavorName}" удалён из файла`);
+  } catch(e) { console.error('Save products error:', e.message); }
+
+  // Синхронизируем с Redis (для Mini App)
+  if (redis) {
+    try {
+      const dataToSave = {
+        products: products,
+        categories: categories
+      };
+      await redis.set('products', JSON.stringify(dataToSave));
+      console.log(`✅ Redis обновлён после удаления вкуса "${deletedFlavorName}"`);
+    } catch(e) {
+      console.error('❌ Ошибка сохранения в Redis:', e.message);
+    }
+  }
+
+  return { success: true, deletedFlavor: deletedFlavorName };
 }
 
 // Переключить цвет (вкл/выкл)
@@ -2400,6 +2450,28 @@ bot.on('callback_query', async (query) => {
       }
     } catch (err) {
       console.error('Error toggling flavor:', err);
+      bot.answerCallbackQuery(query.id, { text: '❌ Ошибка: ' + err.message });
+    }
+  } else if (data.startsWith('admin_deleteflavor_')) {
+    try {
+      const deleteData = data.replace('admin_deleteflavor_', '');
+      // Находим индекс - это всё что после последнего _
+      const parts = deleteData.split('_');
+      const flavorIndex = parseInt(parts[parts.length - 1]);
+      // productId - это всё, кроме последнего элемента
+      const productId = parts.slice(0, -1).join('_');
+      
+      console.log('Delete flavor:', productId, flavorIndex);
+      
+      const result = await deleteFlavor(productId, flavorIndex);
+      if (result.success) {
+        showAdminFlavors(chatId, productId, query.message.message_id);
+        bot.answerCallbackQuery(query.id, { text: `✅ Вкус "${result.deletedFlavor}" удалён` });
+      } else {
+        bot.answerCallbackQuery(query.id, { text: '❌ Ошибка удаления' });
+      }
+    } catch (err) {
+      console.error('Error deleting flavor:', err);
       bot.answerCallbackQuery(query.id, { text: '❌ Ошибка: ' + err.message });
     }
   } else if (data === 'my_orders') {
