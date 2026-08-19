@@ -1325,6 +1325,9 @@ function showAdminReviews(chatId, messageId = null, page = 0) {
 // �����-������
 function showAdminPanel(chatId, messageId = null) {
   const keyboard = [
+  if (categoryId === 'disposable') {
+    keyboard.push([{ text: 'Add', callback_data: 'add_device_start' }]);
+  }
     [{ text: '?? ���������� ��������', callback_data: 'admin_products' }],
     [{ text: '?? ���������� �������',  callback_data: 'admin_stats' }],
     [{ text: '? ������',              callback_data: 'admin_reviews' }],
@@ -2051,6 +2054,13 @@ bot.on('callback_query', async (query) => {
     bot.answerCallbackQuery(query.id, { text: '? ��� ������ �������', show_alert: true });
     // ������������ � ����������
     showAdminStats(chatId, query.message.message_id);
+  } else if (data === 'add_device_start') {
+    addProductState[userId] = { step: 'device_name', data: { categoryId: 'disposable' } };
+    bot.editMessageText(
+      'Add device\n\nEnter name:',
+      { chat_id: chatId, message_id: query.message.message_id }
+    );
+    bot.answerCallbackQuery(query.id);
   } else if (data.startsWith('admin_cat_')) {
     const categoryId = data.replace('admin_cat_', '');
     showAdminCategoryProducts(chatId, categoryId, query.message.message_id);
