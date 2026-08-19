@@ -673,13 +673,11 @@ bot.on('message', async (msg) => {
     const targetUserId = chat.getAdminReplyTarget(userId);
     const targetChat = chat.getChat(targetUserId);
     if (targetChat) {
-      const targetUserMainMenu = buildMainMenu(WEBAPP_URL, targetUserId);
-      
       bot.sendMessage(targetChat.chatId,
         `👨‍💼 *Менеджер:*\n${text}`,
         {
           parse_mode: 'Markdown',
-          reply_markup: targetUserMainMenu.reply_markup
+          reply_markup: { remove_keyboard: true }
         }
       ).catch(() => {});
       
@@ -2891,6 +2889,11 @@ bot.on('callback_query', async (query) => {
     const clientUsername = clientOrder.username !== 'Не указан' ? clientOrder.username : '';
     
     chat.openChat(clientUserId, clientOrder.chatId, clientUsername, clientFirstName);
+    // Убираем клавиатуру у пользователя пока чат активен
+    bot.sendMessage(clientOrder.chatId,
+      '💬 Менеджер начал с вами чат. Напишите сообщение.\n\nЧтобы закрыть чат — /cancel',
+      { reply_markup: { remove_keyboard: true } }
+    );
     chat.setAdminReplyMode(userId, clientUserId);
     
     bot.answerCallbackQuery(query.id, { text: '💬 Введите сообщение клиенту' });
