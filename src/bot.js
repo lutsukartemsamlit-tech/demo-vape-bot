@@ -1,5 +1,5 @@
-﻿require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
-// Принудительно IPv4 (IPv6 может не работать у некоторых провайдеров)
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+// ������������� IPv4 (IPv6 ����� �� �������� � ��������� �����������)
 const dns = require('dns');
 dns.setDefaultResultOrder('ipv4first');
 const TelegramBot = require('node-telegram-bot-api');
@@ -8,12 +8,12 @@ const { formatPrice, generateOrderId } = require('../utils/helpers');
 const { getReviews, saveReview, deleteReview, getStats, hasRecentReview } = require('../utils/reviews');
 const { addProduct } = require('../utils/productManager');
 
-// Redis client для загрузки товаров
+// Redis client ��� �������� �������
 let redis = null;
 let products = [];
 let categories = [];
 
-// Инициализация Redis и загрузка товаров
+// ������������� Redis � �������� �������
 async function loadProductsFromRedis() {
   try {
     if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
@@ -28,38 +28,38 @@ async function loadProductsFromRedis() {
       if (cachedData) {
         const parsedData = typeof cachedData === 'string' ? JSON.parse(cachedData) : cachedData;
         
-        // Redis хранит только массив products, categories берем из файла
+        // Redis ������ ������ ������ products, categories ����� �� �����
         if (Array.isArray(parsedData)) {
           products = parsedData;
-          console.log('✅ Товары загружены из Redis:', products.length);
+          console.log('? ������ ��������� �� Redis:', products.length);
         } else {
-          console.log('⚠️ Неверный формат данных в Redis, загружаем из файла');
+          console.log('?? �������� ������ ������ � Redis, ��������� �� �����');
           const fileData = require('../data/products');
           products = fileData.products;
           categories = fileData.categories;
         }
       } else {
-        console.log('⚠️ Нет данных в Redis, загружаем из файла');
+        console.log('?? ��� ������ � Redis, ��������� �� �����');
         const fileData = require('../data/products');
         products = fileData.products;
         categories = fileData.categories;
-        // Сохраняем в Redis
+        // ��������� � Redis
         await redis.set('products', JSON.stringify(products));
       }
     } else {
-      console.log('⚠️ Redis не настроен, загружаем из файла');
+      console.log('?? Redis �� ��������, ��������� �� �����');
       const fileData = require('../data/products');
       products = fileData.products;
       categories = fileData.categories;
     }
   } catch (e) {
-    console.error('❌ Ошибка загрузки из Redis:', e);
+    console.error('? ������ �������� �� Redis:', e);
     const fileData = require('../data/products');
     products = fileData.products;
     categories = fileData.categories;
   }
   
-  // Загружаем categories из файла если еще не загружены
+  // ��������� categories �� ����� ���� ��� �� ���������
   if (categories.length === 0) {
     const fileData = require('../data/products');
     categories = fileData.categories;
@@ -69,11 +69,11 @@ async function loadProductsFromRedis() {
 const token = process.env.BOT_TOKEN;
 const adminId = process.env.ADMIN_ID;
 const adminIds = process.env.ADMIN_IDS ? process.env.ADMIN_IDS.split(',').map(id => id.trim()) : [adminId];
-const WEBAPP_URL = process.env.WEBAPP_URL || ''; // URL вашего Mini App
-const REQUIRED_CHANNEL = process.env.REQUIRED_CHANNEL || ''; // Username или ID канала для обязательной подписки
+const WEBAPP_URL = process.env.WEBAPP_URL || ''; // URL ������ Mini App
+const REQUIRED_CHANNEL = process.env.REQUIRED_CHANNEL || ''; // Username ��� ID ������ ��� ������������ ��������
 
-// Проверка подписки пользователя на канал
-// Возвращает true если подписан (или канал не задан / пользователь — админ)
+// �������� �������� ������������ �� �����
+// ���������� true ���� �������� (��� ����� �� ����� / ������������ � �����)
 async function isSubscribed(userId) {
   if (!REQUIRED_CHANNEL) return true;
   if (isAdmin(userId)) return true;
@@ -84,399 +84,110 @@ async function isSubscribed(userId) {
     );
     return ['member', 'administrator', 'creator'].includes(member.status);
   } catch (e) {
-    console.error('Ошибка проверки подписки:', e.message);
-    // При ошибке (канал недоступен) — пропускаем проверку
+    console.error('������ �������� ��������:', e.message);
+    // ��� ������ (����� ����������) � ���������� ��������
     return true;
   }
 }
 
-// Показывает сообщение с требованием подписки
+// ���������� ��������� � ����������� ��������
 function sendSubscribeMessage(chatId) {
   const channelLink = REQUIRED_CHANNEL.startsWith('-')
     ? `https://t.me/c/${REQUIRED_CHANNEL.slice(4)}`
     : `https://t.me/${REQUIRED_CHANNEL}`;
 
   bot.sendMessage(chatId,
-    `👋 Для использования бота необходимо подписаться на наш канал!\n\n` +
-    `После подписки нажмите кнопку ниже ⬇️`,
+    `?? ��� ������������� ���� ���������� ����������� �� ��� �����!\n\n` +
+    `����� �������� ������� ������ ���� ??`,
     {
       reply_markup: {
         inline_keyboard: [
-          [{ text: '📢 Подписаться на канал', url: channelLink }],
-          [{ text: '✅ Я подписался', callback_data: 'check_subscription' }]
-        ]
+          [{ text: '🔋 Под-система (с цветами)', callback_data: 'device_type_pod' }],
+              [{ text: '💨 Одноразка (с вкусами)', callback_data: 'device_type_disposable' }]
+            ]
+          }
+        }
+      );
+      return;
+    }
+
+    if (state.step === 'device_variants') {
+      const variants = text.split('\n').map(v => v.trim()).filter(v => v.length > 0);
+      
+      if (variants.length === 0) {
+        bot.sendMessage(chatId, '? ������� ���� �� ���� �������');
+        return;
       }
-    }
-  );
-}
 
-function isAdmin(userId) {
-  return adminIds.includes(userId.toString());
-}
-
-if (!token) {
-  console.error('Ошибка: BOT_TOKEN не установлен в .env файле');
-  process.exit(1);
-}
-
-// Настройка бота с ускоренным опросом
-const botOptions = { 
-  polling: {
-    interval: 200,
-    params: { timeout: 10 }
-  } 
-};
-
-const bot = new TelegramBot(token, botOptions);
-
-// Обработка ошибок polling (409 Conflict - нормальная ситуация при перезапуске)
-bot.on('polling_error', (error) => {
-  // Игнорируем 409 Conflict - это происходит при перезапуске бота
-  if (error.code === 'ETELEGRAM' && error.message.includes('409 Conflict')) {
-    console.log('⚠️ Polling conflict (бот перезапускается)');
-  } else {
-    console.error('❌ Polling error:', error.code, error.message);
-  }
-});
-
-// Загружаем товары из Redis при старте
-loadProductsFromRedis().then(() => {
-  console.log('✅ Бот запущен, товары загружены');
-}).catch(err => {
-  console.error('❌ Ошибка загрузки товаров:', err);
-});
-
-// Хранилище корзин пользователей
-const userCarts = {};
-
-// Хранилище состояний для ввода отзыва: { userId: { step: 'rating'|'text', rating: N, orderId } }
-const reviewState = {};
-
-// Хранилище состояний для добавления товара: { userId: { step: 'name'|'price'|'description'|'flavors', data: {...} } }
-const addProductState = {};
-
-// Подключаем модуль чата
-const chat = require('../utils/chat');
-
-// Главное меню
-function buildMainMenu(webappUrl, userId) {
-  const rows = [
-    ['🛍 Ассортимент', '🛒 Корзина'],
-    ['👥 Менеджеры', '⭐ Отзывы']
-  ];
-  if (webappUrl) {
-    const urlWithUserId = userId ? `${webappUrl}?userId=${userId}` : webappUrl;
-    rows.push([{ text: '🛒 Открыть магазин', web_app: { url: urlWithUserId } }]);
-  }
-  return { reply_markup: { keyboard: rows, resize_keyboard: true } };
-}
-
-function buildAdminMenu(webappUrl, userId) {
-  const rows = [
-    ['🛍 Ассортимент', '🛒 Корзина'],
-    ['👥 Менеджеры', '⭐ Отзывы'],
-    ['⚙️ Админ-панель']
-  ];
-  if (webappUrl) {
-    // Добавляем userId в URL для правильной идентификации
-    const urlWithUserId = userId ? `${webappUrl}?userId=${userId}` : webappUrl;
-    rows.push([{ text: '🛒 Открыть магазин', web_app: { url: urlWithUserId } }]);
-  }
-  return { reply_markup: { keyboard: rows, resize_keyboard: true } };
-}
-
-// Стартовая команда
-bot.onText(/\/start/, async (msg) => {
-  const chatId = msg.chat.id;
-  const userId = msg.from.id;
-  const firstName = msg.from.first_name || 'друг';
-  const isAdminUser = isAdmin(userId);
-
-  // Проверка подписки
-  if (!(await isSubscribed(userId))) {
-    sendSubscribeMessage(chatId);
-    return;
-  }
-  
-  // Создаём меню с userId
-  const mainMenu  = buildMainMenu(WEBAPP_URL, userId);
-  const adminMenu = buildAdminMenu(WEBAPP_URL, userId);
-  
-  const welcomeText = 
-    `Привет, ${firstName}! 👋\n\n` +
-    `Добро пожаловать в PuffNow_63! 🏪\n\n` +
-    `💨 У нас большой ассортимент вейп-продукции:\n` +
-    `• Одноразки/подики\n` +
-    `• Жидкости\n` +
-    `• Расходники\n` +
-    `• Энергетики\n\n` +
-    `Выберите действие из меню ниже:`;
-
-  bot.sendPhoto(chatId, 'AgACAgIAAxkBAAIBbGpsZeQTcBF6z6O3yS6CO_2eq75mAALvHWsbFE5hS_nvyP8d07FrAQADAgADeQADPQQ', {
-    caption: welcomeText,
-    ...(isAdminUser ? adminMenu : mainMenu)
-  });
-});
-
-// Команда отмены чата с поддержкой
-bot.onText(/\/cancel/, (msg) => {
-  const chatId = msg.chat.id;
-  const userId = msg.from.id;
-  const isAdminUser = isAdmin(userId);
-  const mainMenuObj = buildMainMenu(WEBAPP_URL, userId);
-  const adminMenuObj = buildAdminMenu(WEBAPP_URL, userId);
-
-  // Отмена добавления товара
-  if (addProductState[userId]) {
-    delete addProductState[userId];
-    bot.sendMessage(chatId, '❌ Добавление товара отменено', adminMenuObj);
-    return;
-  }
-
-  if (chat.isAdminInReplyMode(userId)) {
-    chat.clearAdminReplyMode(userId);
-    bot.sendMessage(chatId, '❌ Режим ответа отменён', isAdminUser ? adminMenuObj : mainMenuObj);
-  } else if (chat.isChatOpen(userId)) {
-    chat.closeChat(userId);
-    bot.sendMessage(chatId, '❌ Чат с поддержкой закрыт', mainMenuObj);
-  } else {
-    bot.sendMessage(chatId, 'ℹ️ Нет активного чата для отмены', isAdminUser ? adminMenuObj : mainMenuObj);
-  }
-});
-
-// Команда для админов - список активных чатов
-bot.onText(/\/chats/, (msg) => {
-  const chatId = msg.chat.id;
-  const userId = msg.from.id;
-  
-  if (!isAdmin(userId)) {
-    bot.sendMessage(chatId, '❌ Эта команда доступна только администраторам');
-    return;
-  }
-  
-  const activeChats = chat.getAllActiveChats();
-  const adminMenuObj = buildAdminMenu(WEBAPP_URL, userId);
-  
-  if (activeChats.length === 0) {
-    bot.sendMessage(chatId, '📭 Нет активных чатов с пользователями', adminMenuObj);
-    return;
-  }
-  
-  let message = `💬 *Активные чаты: ${activeChats.length}*\n\n`;
-  
-  activeChats.forEach((c, index) => {
-    const startTime = new Date(c.startedAt).toLocaleString('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-    message += `${index + 1}. ${c.firstName} (@${c.username || 'нет'})\n`;
-    message += `   📝 ID: \`${c.userId}\`\n`;
-    message += `   🕐 Начат: ${startTime}\n`;
-    message += `   💬 Сообщений: ${c.messages.length}\n\n`;
-  });
-  
-  const keyboard = activeChats.slice(0, 10).map(c => [{
-    text: `💬 ${c.firstName}`,
-    callback_data: `reply_${c.userId}`
-  }]);
-  
-  bot.sendMessage(chatId, message, {
-    parse_mode: 'Markdown',
-    reply_markup: {
-      inline_keyboard: keyboard
-    }
-  });
-});
-
-// Команда для админов - добавить жидкость
-bot.onText(/\/add_liquid/, (msg) => {
-  const chatId = msg.chat.id;
-  const userId = msg.from.id;
-  
-  if (!isAdmin(userId)) {
-    bot.sendMessage(chatId, '❌ Эта команда доступна только администраторам');
-    return;
-  }
-  
-  // Инициализируем состояние
-  addProductState[userId] = {
-    step: 'name',
-    data: {
-      categoryId: 'liquids',
-      icon: '💧',
-      stock: 50
-    }
-  };
-  
-  bot.sendMessage(chatId, 
-    '📝 *Добавление жидкости*\n\n' +
-    'Введите название жидкости (например: "Annima Love Gold Edition 80мг")\n\n' +
-    'Для отмены используйте /cancel',
-    { parse_mode: 'Markdown' }
-  );
-});
-
-// Команда для админов - добавить вкусы к существующей жидкости
-bot.onText(/\/add_flavors/, (msg) => {
-  const chatId = msg.chat.id;
-  const userId = msg.from.id;
-  
-  if (!isAdmin(userId)) {
-    bot.sendMessage(chatId, '❌ Эта команда доступна только администраторам');
-    return;
-  }
-  
-  // Получаем список жидкостей
-  const { products } = require('../data/products');
-  const liquids = products.filter(p => p.categoryId === 'liquids');
-  
-  if (liquids.length === 0) {
-    bot.sendMessage(chatId, '❌ Нет жидкостей в каталоге');
-    return;
-  }
-  
-  // Показываем список жидкостей для выбора
-  const keyboard = liquids.slice(0, 20).map(liquid => [{
-    text: liquid.name,
-    callback_data: `addflavor_${liquid.id}`
-  }]);
-  
-  bot.sendMessage(chatId,
-    '💧 *Выберите жидкость для добавления вкусов:*',
-    {
-      parse_mode: 'Markdown',
-      reply_markup: {
-        inline_keyboard: keyboard
+      // ���������� ���� ��� ���������
+      if (state.variantType === 'colors') {
+        state.data.colors = variants.map(name => ({ name, enabled: true }));
+      } else {
+        state.data.flavors = variants.map(name => ({ name, stock: '', enabled: true }));
       }
-    }
-  );
-});
 
-// Команда для получения file_id фото
-bot.on('photo', async (msg) => {
-  const chatId = msg.chat.id;
-  const userId = msg.from.id;
-  const photo = msg.photo[msg.photo.length - 1];
+      // ���������� ID
+      const baseId = state.data.name.toLowerCase()
+        .replace(/[^a-z�-��0-9\s]/gi, '')
+        .trim()
+        .replace(/\s+/g, '_')
+        .substring(0, 20);
+      state.data.id = products.find(p => p.id === baseId)
+        ? `${baseId}_${Date.now().toString(36)}`
+        : baseId;
+      
+      state.data.stock = 50;
+      state.data.location = '��� �����';
+      state.data.enabled = true;
 
-  // Если админ добавляет фото для нового товара
-  if (addProductState[userId] && addProductState[userId].step === 'image') {
-    const state = addProductState[userId];
-    state.data.image = photo.file_id;
-    state.data.location = 'Все точки';
+      // ��������� � ������
+      products.push(state.data);
 
-    // Сохраняем товар
-    const result = addProduct(state.data);
-    
-    delete addProductState[userId];
+      // ��������� � Redis
+      if (redis) {
+        try {
+          const dataToSave = { products, categories };
+          await redis.set('products', JSON.stringify(dataToSave));
+          console.log('? ���������� ��������� � Redis:', state.data.name);
+        } catch (e) {
+          console.error('? ������ ���������� � Redis:', e);
+        }
+      }
 
-    if (result.success) {
+      // ��������� � ����
+      try {
+        const fs = require('fs');
+        const path = require('path');
+        const contentJs = '// ��������� �������\nconst categories = ' + JSON.stringify(categories, null, 2) + ';\n\n// ������\nconst products = ' + JSON.stringify(products, null, 2) + ';\n\nmodule.exports = { products, categories };\n';
+        fs.writeFileSync(path.join(__dirname, '..', 'data', 'products.js'), contentJs, 'utf8');
+      } catch (e) {
+        console.error('? ������ ���������� � ����:', e);
+      }
+
       const summary = 
-        `✅ *Товар успешно добавлен!*\n\n` +
-        `📦 Название: ${state.data.name}\n` +
-        `💰 Цена: ${formatPrice(state.data.price)}\n` +
-        `🎨 Вкусов: ${state.data.flavors.length}\n` +
-        `🆔 ID: \`${result.product.id}\``;
+        `? *���������� ���������!*\n\n` +
+        `?? ��������: ${state.data.name}\n` +
+        `?? ����: ${formatPrice(state.data.price)}\n` +
+        `${state.variantType === 'colors' ? '??' : '??'} ���������: ${variants.length}\n` +
+        `?? ID: \`${state.data.id}\``;
+
+      delete addProductState[userId];
 
       bot.sendMessage(chatId, summary, {
         parse_mode: 'Markdown',
-        ...buildAdminMenu(WEBAPP_URL, userId)
+        ...adminMenuObj
       });
-    } else {
-      bot.sendMessage(chatId, `❌ Ошибка сохранения: ${result.error}`, buildAdminMenu(WEBAPP_URL, userId));
+      return;
     }
-    return;
-  }
 
-  // Если пользователь в шаге отправки фото для отзыва
-  if (reviewState[userId] && reviewState[userId].step === 'photo') {
-    const state = reviewState[userId];
-    const firstName = msg.from.first_name || 'Покупатель';
-    const reviewId = `r${Date.now()}`;
-
-    saveReview({
-      id: reviewId,
-      userId,
-      firstName,
-      username: msg.from.username || null,
-      rating: state.rating,
-      text: state.text || null,
-      photoFileId: photo.file_id,
-      orderId: state.orderId || null,
-      date: new Date().toISOString()
-    });
-    delete reviewState[userId];
-
-    bot.sendMessage(chatId,
-      `✅ Спасибо за отзыв, ${firstName}! Ваше мнение очень важно для нас 🙏`,
-      buildMainMenu(WEBAPP_URL, userId)
-    );
-
-    // Уведомляем админов с фото
-    const stars = '⭐'.repeat(state.rating);
-    const caption =
-      `${stars} *Новый отзыв от ${firstName}*${msg.from.username ? ` (@${msg.from.username})` : ''}` +
-      (state.text ? `\n\n_${state.text}_` : '');
-    adminIds.forEach(id => {
-      bot.sendPhoto(id, photo.file_id, {
-        caption,
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [[{ text: '🗑 Удалить', callback_data: `review_delete_${reviewId}` }]]
-        }
-      }).catch(() => {});
-    });
-    return;
-  }
-
-  // Дефолтное поведение — показываем file_id (для разработчика)
-  bot.sendMessage(chatId,
-    `✅ Фото получено!\n\nFile ID:\n\`${photo.file_id}\`\n\nСкопируйте этот ID и отправьте разработчику`,
-    { parse_mode: 'Markdown' }
-  );
-});
-
-// Обработка документов (если фото отправлено как документ)
-bot.on('document', (msg) => {
-  const chatId = msg.chat.id;
-  if (msg.document.mime_type && msg.document.mime_type.startsWith('image/')) {
-    bot.sendMessage(chatId, 
-      `✅ Изображение получено!\n\n` +
-      `File ID:\n\`${msg.document.file_id}\`\n\n` +
-      `Скопируйте этот ID и отправьте разработчику`,
-      { parse_mode: 'Markdown' }
-    );
-  }
-});
-
-// Обработка текстовых сообщений
-bot.on('message', async (msg) => {
-  const chatId = msg.chat.id;
-  const text = msg.text;
-  const userId = msg.from.id;
-
-  if (!text || text.startsWith('/')) return;
-
-  // Проверка подписки
-  if (!(await isSubscribed(userId))) {
-    sendSubscribeMessage(chatId);
-    return;
-  }
-
-  // ========== ОБРАБОТКА ДОБАВЛЕНИЯ ТОВАРА (для админов) ==========
-  if (addProductState[userId]) {
-    const state = addProductState[userId];
-    const adminMenuObj = buildAdminMenu(WEBAPP_URL, userId);
-
-    // Добавление вкусов к существующей жидкости
+    // ���������� ������ � ������������ ��������
     if (state.step === 'add_flavors') {
-      // Перезагружаем товары из Redis чтобы получить актуальные данные
+      // ������������� ������ �� Redis ����� �������� ���������� ������
       await loadProductsFromRedis();
       
       const product = products.find(p => p.id === state.productId);
       if (!product) {
-        bot.sendMessage(chatId, '❌ Товар не найден', adminMenuObj);
+        bot.sendMessage(chatId, '? ����� �� ������', adminMenuObj);
         delete addProductState[userId];
         return;
       }
@@ -484,44 +195,44 @@ bot.on('message', async (msg) => {
       const newFlavors = text.split(',').map(f => f.trim()).filter(f => f.length > 0);
       
       if (newFlavors.length === 0) {
-        bot.sendMessage(chatId, '❌ Укажите хотя бы один вкус');
+        bot.sendMessage(chatId, '? ������� ���� �� ���� ����');
         return;
       }
       
-      // Добавляем новые вкусы к существующим
+      // ��������� ����� ����� � ������������
       const currentFlavors = product.flavors || [];
       const updatedFlavors = [
         ...currentFlavors,
         ...newFlavors.map(name => ({ name, stock: '', enabled: true }))
       ];
       
-      // Обновляем товар в глобальном массиве
+      // ��������� ����� � ���������� �������
       const productIndex = products.findIndex(p => p.id === state.productId);
       if (productIndex !== -1) {
         products[productIndex].flavors = updatedFlavors;
       }
       
-      // Сохраняем в Redis
+      // ��������� � Redis
       if (redis) {
         try {
           await redis.set('products', JSON.stringify(products));
-          console.log('✅ Товары обновлены в Redis');
+          console.log('? ������ ��������� � Redis');
         } catch (e) {
-          console.error('❌ Ошибка сохранения в Redis:', e);
+          console.error('? ������ ���������� � Redis:', e);
         }
       }
       
-      // Также сохраняем через productManager (для fallback в файл)
+      // ����� ��������� ����� productManager (��� fallback � ����)
       const { updateProduct } = require('../utils/productManager');
       updateProduct(state.productId, { flavors: updatedFlavors });
       
       delete addProductState[userId];
       
       bot.sendMessage(chatId,
-        `✅ *Вкусы добавлены!*\n\n` +
-        `💧 Жидкость: ${state.productName}\n` +
-        `🎨 Добавлено вкусов: ${newFlavors.length}\n` +
-        `📊 Всего вкусов: ${updatedFlavors.length}`,
+        `? *����� ���������!*\n\n` +
+        `?? ��������: ${state.productName}\n` +
+        `?? ��������� ������: ${newFlavors.length}\n` +
+        `?? ����� ������: ${updatedFlavors.length}`,
         {
           parse_mode: 'Markdown',
           ...adminMenuObj
@@ -534,8 +245,8 @@ bot.on('message', async (msg) => {
       state.data.name = text;
       state.step = 'price';
       bot.sendMessage(chatId, 
-        `✅ Название: *${text}*\n\n` +
-        `Теперь введите цену в рублях (например: 450)`,
+        `? ��������: *${text}*\n\n` +
+        `������ ������� ���� � ������ (��������: 450)`,
         { parse_mode: 'Markdown' }
       );
       return;
@@ -544,15 +255,15 @@ bot.on('message', async (msg) => {
     if (state.step === 'price') {
       const price = parseInt(text);
       if (isNaN(price) || price <= 0) {
-        bot.sendMessage(chatId, '❌ Неверный формат цены. Введите число (например: 450)');
+        bot.sendMessage(chatId, '? �������� ������ ����. ������� ����� (��������: 450)');
         return;
       }
       state.data.price = price;
       state.data.cashPrice = price;
       state.step = 'description';
       bot.sendMessage(chatId,
-        `✅ Цена: ${formatPrice(price)}\n\n` +
-        `Введите описание (например: "Крепкая солевая жидкость\\nНикотин: 80мг\\nОбъём: 30мл")`,
+        `? ����: ${formatPrice(price)}\n\n` +
+        `������� �������� (��������: "������� ������� ��������\\n�������: 80��\\n�����: 30��")`,
         { parse_mode: 'Markdown' }
       );
       return;
@@ -562,8 +273,8 @@ bot.on('message', async (msg) => {
       state.data.description = text;
       state.step = 'flavors';
       bot.sendMessage(chatId,
-        `✅ Описание сохранено\n\n` +
-        `Теперь введите вкусы через запятую (например: "Арбуз лед, Манго, Клубника")`,
+        `? �������� ���������\n\n` +
+        `������ ������� ����� ����� ������� (��������: "����� ���, �����, ��������")`,
         { parse_mode: 'Markdown' }
       );
       return;
@@ -573,7 +284,7 @@ bot.on('message', async (msg) => {
       const flavors = text.split(',').map(f => f.trim()).filter(f => f.length > 0);
       
       if (flavors.length === 0) {
-        bot.sendMessage(chatId, '❌ Укажите хотя бы один вкус');
+        bot.sendMessage(chatId, '? ������� ���� �� ���� ����');
         return;
       }
 
@@ -581,12 +292,12 @@ bot.on('message', async (msg) => {
       state.step = 'image';
 
       bot.sendMessage(chatId,
-        `✅ Добавлено вкусов: ${flavors.length}\n\n` +
-        `Теперь отправьте фото товара или нажмите "Пропустить"`,
+        `? ��������� ������: ${flavors.length}\n\n` +
+        `������ ��������� ���� ������ ��� ������� "����������"`,
         {
           reply_markup: {
             inline_keyboard: [[
-              { text: '➡️ Пропустить фото', callback_data: 'skip_product_image' }
+              { text: '?? ���������� ����', callback_data: 'skip_product_image' }
             ]]
           }
         }
@@ -595,7 +306,7 @@ bot.on('message', async (msg) => {
     }
   }
 
-  // Если АДМИН в режиме ответа — пересылаем его сообщение пользователю
+  // ���� ����� � ������ ������ � ���������� ��� ��������� ������������
   if (isAdmin(userId) && chat.isAdminInReplyMode(userId)) {
     const targetUserId = chat.getAdminReplyTarget(userId);
     const targetChat = chat.getChat(targetUserId);
@@ -603,18 +314,18 @@ bot.on('message', async (msg) => {
       const targetUserMainMenu = buildMainMenu(WEBAPP_URL, targetUserId);
       
       bot.sendMessage(targetChat.chatId,
-        `👨‍💼 *Менеджер:*\n${text}`,
+        `????? *��������:*\n${text}`,
         {
           parse_mode: 'Markdown',
           reply_markup: targetUserMainMenu.reply_markup
         }
       ).catch(() => {});
       
-      // Сохраняем в историю
+      // ��������� � �������
       chat.addMessage(targetUserId, false, text);
       
       const adminMenuForSender = buildAdminMenu(WEBAPP_URL, userId);
-      bot.sendMessage(chatId, `✅ Сообщение отправлено пользователю ${targetChat.firstName}`,
+      bot.sendMessage(chatId, `? ��������� ���������� ������������ ${targetChat.firstName}`,
         {
           reply_markup: adminMenuForSender.reply_markup
         }
@@ -624,47 +335,47 @@ bot.on('message', async (msg) => {
     return;
   }
 
-  // Если ПОЛЬЗОВАТЕЛЬ в режиме поддержки — пересылаем его сообщение всем админам
+  // ���� ������������ � ������ ��������� � ���������� ��� ��������� ���� �������
   if (chat.isChatOpen(userId) && !isAdmin(userId)) {
     const userChat = chat.getChat(userId);
     
-    // Сохраняем в историю
+    // ��������� � �������
     chat.addMessage(userId, true, text);
     
     adminIds.forEach(adminId => {
       bot.sendMessage(adminId,
-        `💬 *${userChat.firstName}* (@${userChat.username || 'нет'})\n📝 ID: \`${userId}\`\n\n${text}`,
+        `?? *${userChat.firstName}* (@${userChat.username || '���'})\n?? ID: \`${userId}\`\n\n${text}`,
         {
           parse_mode: 'Markdown',
           reply_markup: {
             inline_keyboard: [[
-              { text: '✍️ Ответить', callback_data: `reply_${userId}` },
-              { text: '📜 История', callback_data: `history_${userId}` }
+              { text: '?? ��������', callback_data: `reply_${userId}` },
+              { text: '?? �������', callback_data: `history_${userId}` }
             ]]
           }
         }
       ).catch(() => {});
     });
-    bot.sendMessage(chatId, '✅ Сообщение отправлено менеджеру');
+    bot.sendMessage(chatId, '? ��������� ���������� ���������');
     return;
   }
 
-  // Если пользователь вводит текст отзыва
+  // ���� ������������ ������ ����� ������
   if (reviewState[userId] && reviewState[userId].step === 'text') {
     const state = reviewState[userId];
-    const firstName = msg.from.first_name || 'Покупатель';
+    const firstName = msg.from.first_name || '����������';
 
-    // Сохраняем текст и переходим к шагу фото
+    // ��������� ����� � ��������� � ���� ����
     reviewState[userId].text = text.slice(0, 500);
     reviewState[userId].step = 'photo';
 
     bot.sendMessage(chatId,
-      `📸 Хотите прикрепить фото к отзыву?\n\nОтправьте картинку или нажмите «Пропустить»`,
+      `?? ������ ���������� ���� � ������?\n\n��������� �������� ��� ������� ������������`,
       {
         reply_markup: {
           inline_keyboard: [[
-            { text: '➡️ Пропустить', callback_data: 'review_skip_photo' },
-            { text: '❌ Отмена',     callback_data: 'review_cancel' }
+            { text: '?? ����������', callback_data: 'review_skip_photo' },
+            { text: '? ������',     callback_data: 'review_cancel' }
           ]]
         }
       }
@@ -673,19 +384,19 @@ bot.on('message', async (msg) => {
   }
 
   switch (text) {
-    case '🛍 Ассортимент':
+    case '?? �����������':
       showAssortment(chatId);
       break;
-    case '🛒 Корзина':
+    case '?? �������':
       showCart(chatId);
       break;
-    case '👥 Менеджеры':
+    case '?? ���������':
       showManagers(chatId);
       break;
-    case '⭐ Отзывы':
+    case '? ������':
       showReviews(chatId, userId);
       break;
-    case '⚙️ Админ-панель':
+    case '?? �����-������':
       if (isAdmin(userId)) {
         showAdminPanel(chatId);
       }
@@ -693,60 +404,60 @@ bot.on('message', async (msg) => {
   }
 });
 
-// Показать ассортимент (все товары списком)
+// �������� ����������� (��� ������ �������)
 function showAssortment(chatId, messageId = null) {
   const keyboard = {
     inline_keyboard: [
-      [{ text: '❤️‍🔥 Одноразки/подики', callback_data: 'cat_disposable' }],
-      [{ text: '💧 Жидкости', callback_data: 'cat_liquids' }],
-      [{ text: '📍 Расходники', callback_data: 'cat_accessories' }],
-      [{ text: '🧃 Энергетики', callback_data: 'cat_energy' }]
+      [{ text: '????? ���������/������', callback_data: 'cat_disposable' }],
+      [{ text: '?? ��������', callback_data: 'cat_liquids' }],
+      [{ text: '?? ����������', callback_data: 'cat_accessories' }],
+      [{ text: '?? ����������', callback_data: 'cat_energy' }]
     ]
   };
 
   if (messageId) {
-    bot.editMessageText('📦 *Выберите категорию:*', {
+    bot.editMessageText('?? *�������� ���������:*', {
       chat_id: chatId,
       message_id: messageId,
       parse_mode: 'Markdown',
       reply_markup: keyboard
     }).catch(() => {
-      // Если было фото — удаляем и отправляем текст
+      // ���� ���� ���� � ������� � ���������� �����
       bot.deleteMessage(chatId, messageId).catch(() => {});
-      bot.sendMessage(chatId, '📦 *Выберите категорию:*', {
+      bot.sendMessage(chatId, '?? *�������� ���������:*', {
         parse_mode: 'Markdown',
         reply_markup: keyboard
       });
     });
   } else {
-    bot.sendMessage(chatId, '📦 *Выберите категорию:*', {
+    bot.sendMessage(chatId, '?? *�������� ���������:*', {
       parse_mode: 'Markdown',
       reply_markup: keyboard
     });
   }
 }
 
-// Показать товары категории (простой список кнопок)
+// �������� ������ ��������� (������� ������ ������)
 function showCategoryProducts(chatId, categoryId, messageId = null) {
   const category = categories.find(c => c.id === categoryId);
   const categoryProducts = products.filter(p => p.categoryId === categoryId);
 
   if (categoryProducts.length === 0) {
-    const keyboard = [[{ text: '« К категориям', callback_data: 'back_categories' }]];
+    const keyboard = [[{ text: '� � ����������', callback_data: 'back_categories' }]];
     
     if (messageId) {
-      bot.editMessageText('🤷‍♂️ В этой категории пока нет товаров', {
+      bot.editMessageText('???>? � ���� ��������� ���� ��� �������', {
         chat_id: chatId,
         message_id: messageId,
         reply_markup: { inline_keyboard: keyboard }
       }).catch(() => {
         bot.deleteMessage(chatId, messageId).catch(() => {});
-        bot.sendMessage(chatId, '🤷‍♂️ В этой категории пока нет товаров', {
+        bot.sendMessage(chatId, '???>? � ���� ��������� ���� ��� �������', {
           reply_markup: { inline_keyboard: keyboard }
         });
       });
     } else {
-      bot.sendMessage(chatId, '🤷‍♂️ В этой категории пока нет товаров', {
+      bot.sendMessage(chatId, '???>? � ���� ��������� ���� ��� �������', {
         reply_markup: { inline_keyboard: keyboard }
       });
     }
@@ -755,7 +466,7 @@ function showCategoryProducts(chatId, categoryId, messageId = null) {
 
   const keyboard = [];
   
-  // Показываем только товары без parentId (не дочерние)
+  // ���������� ������ ������ ��� parentId (�� ��������)
   categoryProducts.filter(p => !p.parentId).forEach(product => {
     keyboard.push([{ 
       text: `${product.name} - ${formatPrice(product.price)}`.toUpperCase(), 
@@ -763,19 +474,19 @@ function showCategoryProducts(chatId, categoryId, messageId = null) {
     }]);
   });
   
-  keyboard.push([{ text: '« К категориям', callback_data: 'back_categories' }]);
+  keyboard.push([{ text: '� � ����������', callback_data: 'back_categories' }]);
 
-  const text = `*Товары категории ${category.name}:*`;
+  const text = `*������ ��������� ${category.name}:*`;
 
   if (messageId) {
-    // Пробуем editMessageText (если было текстовое сообщение)
+    // ������� editMessageText (���� ���� ��������� ���������)
     bot.editMessageText(text, {
       chat_id: chatId,
       message_id: messageId,
       parse_mode: 'Markdown',
       reply_markup: { inline_keyboard: keyboard }
     }).catch(() => {
-      // Если было фото — удаляем и отправляем текст
+      // ���� ���� ���� � ������� � ���������� �����
       bot.deleteMessage(chatId, messageId).catch(() => {});
       bot.sendMessage(chatId, text, {
         parse_mode: 'Markdown',
@@ -790,16 +501,16 @@ function showCategoryProducts(chatId, categoryId, messageId = null) {
   }
 }
 
-// Показать детальную карточку товара
+// �������� ��������� �������� ������
 function showProductDetail(chatId, productId, messageId = null) {
   const product = products.find(p => p.id === productId);
   
   if (!product) {
-    bot.answerCallbackQuery(chatId, { text: '❌ Товар не найден' });
+    bot.answerCallbackQuery(chatId, { text: '? ����� �� ������' });
     return;
   }
 
-  // Если это родительский товар — показываем кнопки дочерних линеек
+  // ���� ��� ������������ ����� � ���������� ������ �������� ������
   if (product.isParent && product.subProducts) {
     const subItems = product.subProducts.map(id => products.find(p => p.id === id)).filter(Boolean);
     
@@ -808,12 +519,12 @@ function showProductDetail(chatId, productId, messageId = null) {
       keyboard.push([{ text: sub.name, callback_data: `view_${sub.id}` }]);
     });
     keyboard.push([
-      { text: '⬅️ Назад', callback_data: `cat_${product.categoryId}` }
+      { text: '?? �����', callback_data: `cat_${product.categoryId}` }
     ]);
 
-    const caption = `*${product.name.toUpperCase()}*\n\nВыберите линейку:`;
+    const caption = `*${product.name.toUpperCase()}*\n\n�������� �������:`;
     
-    // Проверяем что image это file_id, а не URL
+    // ��������� ��� image ��� file_id, � �� URL
     const isTelegramFileId = product.image && !product.image.startsWith('http');
 
     if (isTelegramFileId && messageId) {
@@ -841,7 +552,7 @@ function showProductDetail(chatId, productId, messageId = null) {
         reply_markup: { inline_keyboard: keyboard }
       });
     } else {
-      // Без фото - только текст
+      // ��� ���� - ������ �����
       if (messageId) {
         bot.editMessageText(caption, {
           chat_id: chatId,
@@ -867,11 +578,11 @@ function showProductDetail(chatId, productId, messageId = null) {
 
   let caption = `*${product.name.toUpperCase()}*\n\n`;
 
-  // Если есть вкусы с количеством
+  // ���� ���� ����� � �����������
   if (product.flavors && product.flavors.length > 0) {
     const enabledFlavors = product.flavors.filter(f => {
       if (typeof f === 'object') {
-        // Если enabled не определен или true - включен
+        // ���� enabled �� ��������� ��� true - �������
         return f.enabled === undefined || f.enabled === true;
       }
       return true;
@@ -881,58 +592,58 @@ function showProductDetail(chatId, productId, messageId = null) {
       const flavorText = typeof flavor === 'string' ? flavor : flavor.name;
       const flavorStock = typeof flavor === 'object' ? flavor.stock : '';
       
-      caption += `┃ ${flavorText}${flavorStock ? ` — ${flavorStock}` : ''}\n`;
+      caption += `? ${flavorText}${flavorStock ? ` � ${flavorStock}` : ''}\n`;
     });
   }
-  // Если есть цвета
+  // ���� ���� �����
   else if (product.colors && product.colors.length > 0) {
     const enabledColors = product.colors.filter(c =>
       typeof c === 'string' || c.enabled === undefined || c.enabled === true
     );
     enabledColors.forEach((color) => {
       const colorName = typeof color === 'object' ? color.name : color;
-      caption += `┃ ${colorName}\n`;
+      caption += `? ${colorName}\n`;
     });
   }
-  // Если есть опции
+  // ���� ���� �����
   else if (product.options && product.options.length > 0) {
     product.options.forEach((option) => {
       const optionData = typeof option === 'object' ? option : { name: option, enabled: true };
       const isEnabled = optionData.enabled === undefined || optionData.enabled === true;
       if (isEnabled) {
         const name = typeof option === 'object' ? option.name : option;
-        caption += `┃ ${name}\n`;
+        caption += `? ${name}\n`;
       }
     });
   }
 
   caption += `\n`;
   
-  // Цены
+  // ����
   const price = product.cashPrice || product.price;
   
-  caption += `Цена: ${formatPrice(price)}`;
+  caption += `����: ${formatPrice(price)}`;
 
   const keyboard = [];
 
-  // Кнопка добавить в корзину
+  // ������ �������� � �������
   keyboard.push([{ 
-    text: '🛒 Добавить в корзину', 
+    text: '?? �������� � �������', 
     callback_data: `add_${product.id}` 
   }]);
 
   keyboard.push([
-    { text: '⬅️ Назад', callback_data: product.parentId ? `view_${product.parentId}` : `cat_${product.categoryId}` }
+    { text: '?? �����', callback_data: product.parentId ? `view_${product.parentId}` : `cat_${product.categoryId}` }
   ]);
 
-  // Если есть изображение - отправляем/редактируем фото
-  // ВАЖНО: Telegram bot API может работать только с file_id, не с внешними URL
-  // Поэтому проверяем что image это file_id (начинается с букв), а не URL
+  // ���� ���� ����������� - ����������/����������� ����
+  // �����: Telegram bot API ����� �������� ������ � file_id, �� � �������� URL
+  // ������� ��������� ��� image ��� file_id (���������� � ����), � �� URL
   const isTelegramFileId = product.image && !product.image.startsWith('http');
   
   if (isTelegramFileId) {
     if (messageId) {
-      // Пытаемся редактировать существующее сообщение с фото
+      // �������� ������������� ������������ ��������� � ����
       bot.editMessageMedia({
         type: 'photo',
         media: product.image,
@@ -943,7 +654,7 @@ function showProductDetail(chatId, productId, messageId = null) {
         message_id: messageId,
         reply_markup: { inline_keyboard: keyboard }
       }).catch((err) => {
-        // Если не получилось отредактировать (было текстовое сообщение) - удаляем и отправляем новое
+        // ���� �� ���������� ��������������� (���� ��������� ���������) - ������� � ���������� �����
         bot.deleteMessage(chatId, messageId).catch(() => {});
         bot.sendPhoto(chatId, product.image, {
           caption: caption,
@@ -952,13 +663,13 @@ function showProductDetail(chatId, productId, messageId = null) {
         });
       });
     } else {
-      // Отправляем новое фото
+      // ���������� ����� ����
       bot.sendPhoto(chatId, product.image, {
         caption: caption,
         parse_mode: 'Markdown',
         reply_markup: { inline_keyboard: keyboard }
       }).catch((err) => {
-        // Если не удалось отправить фото - отправляем текст
+        // ���� �� ������� ��������� ���� - ���������� �����
         bot.sendMessage(chatId, caption, {
           parse_mode: 'Markdown',
           reply_markup: { inline_keyboard: keyboard }
@@ -966,16 +677,16 @@ function showProductDetail(chatId, productId, messageId = null) {
       });
     }
   } else {
-    // Без фото
+    // ��� ����
     if (messageId) {
-      // Пробуем editMessageText (если было текстовое сообщение)
+      // ������� editMessageText (���� ���� ��������� ���������)
       bot.editMessageText(caption, {
         chat_id: chatId,
         message_id: messageId,
         parse_mode: 'Markdown',
         reply_markup: { inline_keyboard: keyboard }
       }).catch(() => {
-        // Было фото — отправляем новое текстовое, потом удаляем старое
+        // ���� ���� � ���������� ����� ���������, ����� ������� ������
         bot.sendMessage(chatId, caption, {
           parse_mode: 'Markdown',
           reply_markup: { inline_keyboard: keyboard }
@@ -992,21 +703,21 @@ function showProductDetail(chatId, productId, messageId = null) {
   }
 }
 
-// Показать корзину
+// �������� �������
 function showCart(chatId) {
   const cart = userCarts[chatId] || [];
 
   if (cart.length === 0) {
-    bot.sendMessage(chatId, '🛒 Ваша корзина пуста', {
+    bot.sendMessage(chatId, '?? ���� ������� �����', {
       reply_markup: {
-        inline_keyboard: [[{ text: '🛍 Перейти в каталог', callback_data: 'categories' }]]
+        inline_keyboard: [[{ text: '?? ������� � �������', callback_data: 'categories' }]]
       }
     });
     return;
   }
 
   let total = 0;
-  let message = '🛒 *Ваша корзина:*\n\n';
+  let message = '?? *���� �������:*\n\n';
 
   cart.forEach((item, index) => {
     const product = products.find(p => p.id === item.productId);
@@ -1017,17 +728,17 @@ function showCart(chatId) {
 
     message += `${index + 1}. ${product.icon} ${product.name}`;
     if (item.flavor) {
-      message += `\n   🎨 ${item.flavor}`;
+      message += `\n   ?? ${item.flavor}`;
     }
-    message += `\n   ${item.quantity} × ${formatPrice(product.price)} = ${formatPrice(itemTotal)}\n\n`;
+    message += `\n   ${item.quantity} ? ${formatPrice(product.price)} = ${formatPrice(itemTotal)}\n\n`;
   });
 
-  message += `💰 *Итого: ${formatPrice(total)}*`;
+  message += `?? *�����: ${formatPrice(total)}*`;
 
   const keyboard = [
-    [{ text: '✅ Оформить заказ', callback_data: 'checkout' }],
-    [{ text: '🗑 Очистить корзину', callback_data: 'clear_cart' }],
-    [{ text: '🛍 Продолжить покупки', callback_data: 'back_categories' }]
+    [{ text: '? �������� �����', callback_data: 'checkout' }],
+    [{ text: '?? �������� �������', callback_data: 'clear_cart' }],
+    [{ text: '?? ���������� �������', callback_data: 'back_categories' }]
   ];
 
   bot.sendMessage(chatId, message, {
@@ -1036,7 +747,7 @@ function showCart(chatId) {
   });
 }
 
-// Добавить товар в корзину (без вкуса)
+// �������� ����� � ������� (��� �����)
 function addToCart(queryId, chatId, productId) {
   if (!userCarts[chatId]) {
     userCarts[chatId] = [];
@@ -1044,7 +755,7 @@ function addToCart(queryId, chatId, productId) {
 
   const product = products.find(p => p.id === productId);
   if (!product || product.stock === 0) {
-    bot.answerCallbackQuery(queryId, { text: '❌ Товар недоступен' });
+    bot.answerCallbackQuery(queryId, { text: '? ����� ����������' });
     return;
   }
 
@@ -1056,45 +767,45 @@ function addToCart(queryId, chatId, productId) {
   }
 
   bot.answerCallbackQuery(queryId, { 
-    text: `✅ ${product.name} добавлен в корзину!`,
+    text: `? ${product.name} �������� � �������!`,
     show_alert: false
   });
 }
 
-// Показать меню выбора вкуса/цвета/опции
+// �������� ���� ������ �����/�����/�����
 function showFlavorSelection(chatId, productId, messageId, selectedFlavors = []) {
   const product = products.find(p => p.id === productId);
   if (!product) return;
 
-  // Определяем тип вариантов (flavors, colors, options)
+  // ���������� ��� ��������� (flavors, colors, options)
   let variants = [];
-  let variantType = 'вкус';
-  let variantIcon = '🎨';
+  let variantType = '����';
+  let variantIcon = '??';
   
   if (product.flavors) {
-    // Фильтруем только enabled вкусы
+    // ��������� ������ enabled �����
     const enabledFlavors = product.flavors.filter(f => {
       if (typeof f === 'object') return f.enabled === undefined || f.enabled === true;
       return true;
     });
     variants = enabledFlavors.map(f => typeof f === 'object' ? f.name : f);
-    variantType = 'вкус';
-    variantIcon = '🎨';
+    variantType = '����';
+    variantIcon = '??';
   } else if (product.colors) {
     const enabledColors = product.colors.filter(c =>
       typeof c === 'string' || c.enabled === undefined || c.enabled === true
     );
     variants = enabledColors.map(c => typeof c === 'object' ? c.name : c);
-    variantType = 'цвет';
-    variantIcon = '🎨';
+    variantType = '����';
+    variantIcon = '??';
   } else if (product.options) {
     const enabledOptions = product.options.filter(o => {
       if (typeof o === 'object') return o.enabled === undefined || o.enabled === true;
       return true;
     });
     variants = enabledOptions.map(o => typeof o === 'object' ? o.name : o);
-    variantType = 'вариант';
-    variantIcon = '⚙️';
+    variantType = '�������';
+    variantIcon = '??';
   }
 
   const keyboard = [];
@@ -1102,41 +813,41 @@ function showFlavorSelection(chatId, productId, messageId, selectedFlavors = [])
   variants.forEach((variant, index) => {
     const isSelected = selectedFlavors.includes(index);
     keyboard.push([{
-      text: `${isSelected ? '✅ ' : ''}${variant}`,
+      text: `${isSelected ? '? ' : ''}${variant}`,
       callback_data: `flavorpick_${product.id}_${index}`
     }]);
   });
 
-  // Кнопка подтвердить
+  // ������ �����������
   const hasSelection = selectedFlavors.length > 0;
   keyboard.push([{
-    text: hasSelection ? `🛒 Подтвердить (${selectedFlavors.length} шт.)` : '🛒 Подтвердить',
+    text: hasSelection ? `?? ����������� (${selectedFlavors.length} ��.)` : '?? �����������',
     callback_data: `flavorconfirm_${product.id}`
   }]);
-  keyboard.push([{ text: '❌ Отмена', callback_data: `view_${product.id}` }]);
+  keyboard.push([{ text: '? ������', callback_data: `view_${product.id}` }]);
 
   const selectedNames = selectedFlavors.map(i => variants[i]);
 
-  let text = `${variantIcon} *Выберите ${variantType} для ${product.name}:*\n\n`;
+  let text = `${variantIcon} *�������� ${variantType} ��� ${product.name}:*\n\n`;
   if (selectedNames.length > 0) {
-    text += `Выбрано:\n${selectedNames.map(n => `✅ ${n}`).join('\n')}\n\n`;
+    text += `�������:\n${selectedNames.map(n => `? ${n}`).join('\n')}\n\n`;
   }
-  text += `Нажмите на ${variantType} чтобы выбрать/снять выбор`;
+  text += `������� �� ${variantType} ����� �������/����� �����`;
 
-  // Сначала пробуем editMessageText (если было текстовое сообщение)
-  // Если не вышло (было фото) — удаляем и отправляем новое
+  // ������� ������� editMessageText (���� ���� ��������� ���������)
+  // ���� �� ����� (���� ����) � ������� � ���������� �����
   bot.editMessageText(text, {
     chat_id: chatId,
     message_id: messageId,
     parse_mode: 'Markdown',
     reply_markup: { inline_keyboard: keyboard }
   }).catch(() => {
-    // editMessageText не сработало — значит было фото, отправляем новое сообщение
+    // editMessageText �� ��������� � ������ ���� ����, ���������� ����� ���������
     bot.sendMessage(chatId, text, {
       parse_mode: 'Markdown',
       reply_markup: { inline_keyboard: keyboard }
     }).then(newMsg => {
-      // Удаляем старое фото-сообщение после отправки нового
+      // ������� ������ ����-��������� ����� �������� ������
       bot.deleteMessage(chatId, messageId).catch(() => {});
     }).catch(err => {
       console.error('showFlavorSelection sendMessage error:', err.message);
@@ -1144,12 +855,12 @@ function showFlavorSelection(chatId, productId, messageId, selectedFlavors = [])
   });
 }
 
-// Точки самовывоза
+// ����� ����������
 const PICKUP_POINTS = [
-  { id: 'metro_pobedy', name: '📍 Метро Победы', address: 'Метро Победы' }
+  { id: 'metro_pobedy', name: '?? ����� ������', address: '����� ������' }
 ];
 
-// Показать выбор точки самовывоза
+// �������� ����� ����� ����������
 function showPickupSelection(chatId, messageId) {
   const keyboard = [];
 
@@ -1160,9 +871,9 @@ function showPickupSelection(chatId, messageId) {
     }]);
   });
 
-  keyboard.push([{ text: '❌ Отмена', callback_data: 'show_cart' }]);
+  keyboard.push([{ text: '? ������', callback_data: 'show_cart' }]);
 
-  const text = `🏪 *Выберите точку самовывоза:*\n\n📍 *Метро Победы*`;
+  const text = `?? *�������� ����� ����������:*\n\n?? *����� ������*`;
 
   bot.editMessageText(text, {
     chat_id: chatId,
@@ -1177,23 +888,23 @@ function showPickupSelection(chatId, messageId) {
   });
 }
 
-// Оформление заказа
+// ���������� ������
 function checkout(chatId, userId, username, firstName, pickupPoint) {
   const cart = userCarts[chatId] || [];
 
   if (cart.length === 0) {
-    bot.sendMessage(chatId, '❌ Корзина пуста');
+    bot.sendMessage(chatId, '? ������� �����');
     return;
   }
 
-  // Функция для экранирования Markdown спец. символов
+  // ������� ��� ������������� Markdown ����. ��������
   function escapeMarkdown(text) {
     if (!text) return '';
     return String(text).replace(/[_*[\]()~`>#+\-=|{}.!\\]/g, '\\$&');
   }
 
   let total = 0;
-  let orderDetails = '📦 *Новый заказ!*\n\n';
+  let orderDetails = '?? *����� �����!*\n\n';
 
   cart.forEach((item, index) => {
     const product = products.find(p => p.id === item.productId);
@@ -1202,19 +913,19 @@ function checkout(chatId, userId, username, firstName, pickupPoint) {
 
     orderDetails += `${index + 1}\\. ${escapeMarkdown(product.name)}`;
     if (item.flavor) {
-      orderDetails += `\n   🎨 ${escapeMarkdown(item.flavor)}`;
+      orderDetails += `\n   ?? ${escapeMarkdown(item.flavor)}`;
     }
-    orderDetails += `\n   ${item.quantity} × ${formatPrice(product.price)} = ${formatPrice(itemTotal)}\n\n`;
+    orderDetails += `\n   ${item.quantity} ? ${formatPrice(product.price)} = ${formatPrice(itemTotal)}\n\n`;
   });
 
-  orderDetails += `💰 *Итого: ${formatPrice(total)}*`;
+  orderDetails += `?? *�����: ${formatPrice(total)}*`;
 
   const orderId = generateOrderId();
   const order = {
     id: orderId,
     userId,
-    username: username || 'Не указан',
-    firstName: firstName || 'Клиент',
+    username: username || '�� ������',
+    firstName: firstName || '������',
     chatId,
     items: cart,
     total,
@@ -1224,24 +935,24 @@ function checkout(chatId, userId, username, firstName, pickupPoint) {
 
   saveOrder(order);
 
-  // Уведомление клиенту (тоже используем HTML для надёжности)
-  const clientOrderText = `✅ Спасибо за заказ!\n\n` +
-    `Номер заказа: <b>#${orderId}</b>\n\n` +
-    `📦 <b>Новый заказ!</b>\n\n` +
+  // ����������� ������� (���� ���������� HTML ��� ���������)
+  const clientOrderText = `? ������� �� �����!\n\n` +
+    `����� ������: <b>#${orderId}</b>\n\n` +
+    `?? <b>����� �����!</b>\n\n` +
     cart.map((item, index) => {
       const product = products.find(p => p.id === item.productId);
       const itemTotal = product.price * item.quantity;
       let itemText = `${index + 1}. ${product.name}`;
       if (item.flavor) {
-        itemText += `\n   🎨 ${item.flavor}`;
+        itemText += `\n   ?? ${item.flavor}`;
       }
-      itemText += `\n   ${item.quantity} × ${formatPrice(product.price)} = ${formatPrice(itemTotal)}`;
+      itemText += `\n   ${item.quantity} ? ${formatPrice(product.price)} = ${formatPrice(itemTotal)}`;
       return itemText;
     }).join('\n\n') + '\n\n' +
-    `💰 <b>Итого: ${formatPrice(total)}</b>\n\n` +
-    `🏪 <b>Точка самовывоза:</b> ${pickupPoint}\n\n` +
-    `💳 Оплата при получении наличными, при оплате переводом согласовывать с менеджером\n\n` +
-    `Наш менеджер скоро свяжется с вами!`;
+    `?? <b>�����: ${formatPrice(total)}</b>\n\n` +
+    `?? <b>����� ����������:</b> ${pickupPoint}\n\n` +
+    `?? ������ ��� ��������� ���������, ��� ������ ��������� ������������� � ����������\n\n` +
+    `��� �������� ����� �������� � ����!`;
 
   bot.sendMessage(
     chatId,
@@ -1249,32 +960,32 @@ function checkout(chatId, userId, username, firstName, pickupPoint) {
     { parse_mode: 'HTML' }
   );
 
-  // Уведомление всем администраторам
-  // Формируем информацию о клиенте (БЕЗ экранирования - будем использовать HTML)
-  let clientInfo = `👤 Клиент: ${firstName || 'Клиент'}`;
+  // ����������� ���� ���������������
+  // ��������� ���������� � ������� (��� ������������� - ����� ������������ HTML)
+  let clientInfo = `?? ������: ${firstName || '������'}`;
   if (username) {
     clientInfo += ` (@${username})`;
   }
-  clientInfo += `\n📝 ID: ${userId}`;
+  clientInfo += `\n?? ID: ${userId}`;
   
-  // Сообщение админам - используем HTML вместо Markdown для надёжности
-  const adminMessage = `📦 <b>Новый заказ!</b>\n\n` +
+  // ��������� ������� - ���������� HTML ������ Markdown ��� ���������
+  const adminMessage = `?? <b>����� �����!</b>\n\n` +
     cart.map((item, index) => {
       const product = products.find(p => p.id === item.productId);
       const itemTotal = product.price * item.quantity;
       let itemText = `${index + 1}. ${product.name}`;
       if (item.flavor) {
-        itemText += `\n   🎨 ${item.flavor}`;
+        itemText += `\n   ?? ${item.flavor}`;
       }
-      itemText += `\n   ${item.quantity} × ${formatPrice(product.price)} = ${formatPrice(itemTotal)}`;
+      itemText += `\n   ${item.quantity} ? ${formatPrice(product.price)} = ${formatPrice(itemTotal)}`;
       return itemText;
     }).join('\n\n') + '\n\n' +
-    `💰 <b>Итого: ${formatPrice(total)}</b>\n\n` +
+    `?? <b>�����: ${formatPrice(total)}</b>\n\n` +
     `${clientInfo}\n` +
-    `🏪 Точка самовывоза: ${pickupPoint}\n` +
-    `🆔 Заказ: #${orderId}`;
+    `?? ����� ����������: ${pickupPoint}\n` +
+    `?? �����: #${orderId}`;
 
-  // Функция отправки с retry для каждого админа
+  // ������� �������� � retry ��� ������� ������
   async function sendToAdmin(adminId, retries = 3) {
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
@@ -1286,25 +997,25 @@ function checkout(chatId, userId, username, firstName, pickupPoint) {
             reply_markup: {
               inline_keyboard: [
                 [
-                  { text: '✅ Подтвердить', callback_data: `confirm_${orderId}` },
-                  { text: '❌ Отменить', callback_data: `cancel_${orderId}` }
+                  { text: '? �����������', callback_data: `confirm_${orderId}` },
+                  { text: '? ��������', callback_data: `cancel_${orderId}` }
                 ],
                 [
-                  { text: '🏁 Завершить заказ', callback_data: `complete_${orderId}` }
+                  { text: '?? ��������� �����', callback_data: `complete_${orderId}` }
                 ],
                 [
-                  { text: '💬 Написать клиенту', callback_data: `contact_${userId}` }
+                  { text: '?? �������� �������', callback_data: `contact_${userId}` }
                 ]
               ]
             }
           }
         );
-        console.log(`✅ Заказ ${orderId} отправлен админу ${adminId} (попытка ${attempt})`);
+        console.log(`? ����� ${orderId} ��������� ������ ${adminId} (������� ${attempt})`);
         return true;
       } catch (err) {
-        console.error(`❌ Не удалось отправить заказ ${orderId} админу ${adminId} (попытка ${attempt}/${retries}):`, err.message);
+        console.error(`? �� ������� ��������� ����� ${orderId} ������ ${adminId} (������� ${attempt}/${retries}):`, err.message);
         if (attempt < retries) {
-          // Ждём перед следующей попыткой (exponential backoff)
+          // ��� ����� ��������� �������� (exponential backoff)
           await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
         }
       }
@@ -1312,36 +1023,36 @@ function checkout(chatId, userId, username, firstName, pickupPoint) {
     return false;
   }
 
-  // Отправляем всем админам параллельно с retry
+  // ���������� ���� ������� ����������� � retry
   Promise.all(adminIds.map(id => sendToAdmin(id)))
     .then(results => {
       const successCount = results.filter(r => r).length;
-      console.log(`📊 Заказ ${orderId}: отправлено ${successCount}/${adminIds.length} админам`);
+      console.log(`?? ����� ${orderId}: ���������� ${successCount}/${adminIds.length} �������`);
     })
-    .catch(err => console.error('❌ Ошибка при отправке заказа админам:', err));
+    .catch(err => console.error('? ������ ��� �������� ������ �������:', err));
 
-  // Очистить корзину
+  // �������� �������
   userCarts[chatId] = [];
 }
 
-// Показать информацию о магазине
+// �������� ���������� � ��������
 function showAbout(chatId) {
   bot.sendMessage(
     chatId,
-    `🏪 *PuffNow_63*\n\n` +
-    `Мы предлагаем:\n` +
-    `💨 Оригинальная продукция\n` +
-    `🚚 Быстрая доставка по Омску\n` +
-    `💳 Оплата при получении\n` +
-    `✅ Гарантия качества\n` +
-    `📞 Консультация специалиста\n` +
-    `🎁 Бонусы постоянным клиентам\n\n` +
-    `⚠️ Помните: вейпинг вреден для здоровья!`,
+    `?? *PuffNow_63*\n\n` +
+    `�� ����������:\n` +
+    `?? ������������ ���������\n` +
+    `?? ������� �������� �� �����\n` +
+    `?? ������ ��� ���������\n` +
+    `? �������� ��������\n` +
+    `?? ������������ �����������\n` +
+    `?? ������ ���������� ��������\n\n` +
+    `?? �������: ������� ������ ��� ��������!`,
     { parse_mode: 'Markdown' }
   );
 }
 
-// Показать профиль пользователя
+// �������� ������� ������������
 function showProfile(chatId, userId, user) {
   const orders = getOrders().filter(o => o.userId === userId);
   const totalOrders = orders.length;
@@ -1352,74 +1063,74 @@ function showProfile(chatId, userId, user) {
     totalSpent += order.total;
   });
 
-  const username = user.username ? `@${user.username}` : 'не указан';
-  const firstName = user.first_name || 'Пользователь';
+  const username = user.username ? `@${user.username}` : '�� ������';
+  const firstName = user.first_name || '������������';
 
   bot.sendMessage(
     chatId,
-    `👤 *Ваш профиль*\n\n` +
-    `Имя: ${firstName}\n` +
+    `?? *��� �������*\n\n` +
+    `���: ${firstName}\n` +
     `Username: ${username}\n` +
     `ID: \`${userId}\`\n\n` +
-    `📊 *Статистика:*\n` +
-    `Всего заказов: ${totalOrders}\n` +
-    `Выполнено: ${completedOrders}\n` +
-    `Потрачено: ${formatPrice(totalSpent)}\n\n` +
-    `🛒 Ваша корзина: /cart`,
+    `?? *����������:*\n` +
+    `����� �������: ${totalOrders}\n` +
+    `���������: ${completedOrders}\n` +
+    `���������: ${formatPrice(totalSpent)}\n\n` +
+    `?? ���� �������: /cart`,
     { 
       parse_mode: 'Markdown',
       reply_markup: {
         inline_keyboard: [
-          [{ text: '📦 Мои заказы', callback_data: 'my_orders' }],
-          [{ text: '🛒 Корзина', callback_data: 'show_cart' }]
+          [{ text: '?? ��� ������', callback_data: 'my_orders' }],
+          [{ text: '?? �������', callback_data: 'show_cart' }]
         ]
       }
     }
   );
 }
 
-// Показать менеджеров
+// �������� ����������
 function showManagers(chatId) {
   bot.sendMessage(
     chatId,
-    `👥 *Менеджеры*\n\n` +
-    `По всем вопросам пишите нашему менеджеру:\n\n` +
-    `👨‍💼 @PuffNow\\_63\n\n` +
-    `Нашли баг в боте?\n\n👨‍💼 @neresu`,
+    `?? *���������*\n\n` +
+    `�� ���� �������� ������ ������ ���������:\n\n` +
+    `????? @PuffNow\\_63\n\n` +
+    `����� ��� � ����?\n\n????? @neresu`,
     { parse_mode: 'Markdown' }
   );
 }
 
-// Показать отзывы
+// �������� ������
 function buildReviewCaption(reviews, stats, page) {
   const total = reviews.length;
   const r = reviews[page];
-  const stars = '⭐'.repeat(r.rating);
+  const stars = '?'.repeat(r.rating);
   const date = new Date(r.date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
-  const name = r.firstName || 'Покупатель';
+  const name = r.firstName || '����������';
 
   let text = `${stars} *${name}*\n`;
-  text += `📅 ${date}\n`;
-  if (r.text) text += `\n💬 _${r.text}_\n`;
-  text += `\n━━━━━━━━━━━━━━━━━━━━━━\n`;
-  text += `⭐ *Отзывы покупателей* · ${'⭐'.repeat(Math.round(stats.avg))} *${stats.avg}* (${total})\n`;
-  text += `_${page + 1} из ${total}_`;
+  text += `?? ${date}\n`;
+  if (r.text) text += `\n?? _${r.text}_\n`;
+  text += `\n??????????????????????\n`;
+  text += `? *������ �����������* � ${'?'.repeat(Math.round(stats.avg))} *${stats.avg}* (${total})\n`;
+  text += `_${page + 1} �� ${total}_`;
   return text;
 }
 
 function buildReviewPageKeyboard(reviews, page, hasPurchase) {
   const total = reviews.length;
   const navRow = [];
-  if (page > 0)          navRow.push({ text: '⬅️',  callback_data: `review_page_${page - 1}` });
-  if (page < total - 1)  navRow.push({ text: '➡️',  callback_data: `review_page_${page + 1}` });
+  if (page > 0)          navRow.push({ text: '??',  callback_data: `review_page_${page - 1}` });
+  if (page < total - 1)  navRow.push({ text: '??',  callback_data: `review_page_${page + 1}` });
 
   const keyboard = { inline_keyboard: [] };
   if (navRow.length) keyboard.inline_keyboard.push(navRow);
-  if (hasPurchase)   keyboard.inline_keyboard.push([{ text: '✍️ Оставить отзыв', callback_data: 'review_start' }]);
+  if (hasPurchase)   keyboard.inline_keyboard.push([{ text: '?? �������� �����', callback_data: 'review_start' }]);
   return keyboard;
 }
 
-// Отправить одну карточку отзыва (новым сообщением или заменив старое)
+// ��������� ���� �������� ������ (����� ���������� ��� ������� ������)
 async function sendReviewPage(chatId, reviews, stats, page, hasPurchase, deleteMsgId = null) {
   const r = reviews[page];
   const text = buildReviewCaption(reviews, stats, page);
@@ -1450,9 +1161,9 @@ function showReviews(chatId, userId) {
   const hasPurchase = orders.some(o => o.userId === userId && o.status === 'confirmed');
 
   if (stats.count === 0) {
-    let text = `⭐ *Отзывы покупателей*\n\nПока отзывов нет. Будьте первым! 🙌`;
-    if (!hasPurchase) text += `\n\n_Оставить отзыв могут только покупатели с подтверждёнными заказами._`;
-    const keyboard = { inline_keyboard: hasPurchase ? [[{ text: '✍️ Оставить отзыв', callback_data: 'review_start' }]] : [] };
+    let text = `? *������ �����������*\n\n���� ������� ���. ������ ������! ??`;
+    if (!hasPurchase) text += `\n\n_�������� ����� ����� ������ ���������� � �������������� ��������._`;
+    const keyboard = { inline_keyboard: hasPurchase ? [[{ text: '?? �������� �����', callback_data: 'review_start' }]] : [] };
     bot.sendMessage(chatId, text, { parse_mode: 'Markdown', reply_markup: keyboard });
     return;
   }
@@ -1462,32 +1173,32 @@ function showReviews(chatId, userId) {
 
 
 
-// Начать сбор отзыва (запрос оценки)
+// ������ ���� ������ (������ ������)
 function askReviewRating(chatId, userId, orderId = null) {
   reviewState[userId] = { step: 'rating', orderId };
 
   const keyboard = {
     inline_keyboard: [[
-      { text: '⭐',     callback_data: 'review_rate_1' },
-      { text: '⭐⭐',   callback_data: 'review_rate_2' },
-      { text: '⭐⭐⭐', callback_data: 'review_rate_3' },
+      { text: '?',     callback_data: 'review_rate_1' },
+      { text: '??',   callback_data: 'review_rate_2' },
+      { text: '???', callback_data: 'review_rate_3' },
     ], [
-      { text: '⭐⭐⭐⭐',   callback_data: 'review_rate_4' },
-      { text: '⭐⭐⭐⭐⭐', callback_data: 'review_rate_5' },
+      { text: '????',   callback_data: 'review_rate_4' },
+      { text: '?????', callback_data: 'review_rate_5' },
     ], [
-      { text: '❌ Отмена', callback_data: 'review_cancel' }
+      { text: '? ������', callback_data: 'review_cancel' }
     ]]
   };
 
   bot.sendMessage(chatId,
-    `✍️ *Оставить отзыв*\n\nПоставьте оценку нашему магазину:`,
+    `?? *�������� �����*\n\n��������� ������ ������ ��������:`,
     { parse_mode: 'Markdown', reply_markup: keyboard }
   );
 }
 
 
 
-// Статистика заказов для админа
+// ���������� ������� ��� ������
 function showAdminStats(chatId, messageId = null) {
   const orders = getOrders();
 
@@ -1500,39 +1211,39 @@ function showAdminStats(chatId, messageId = null) {
     .filter(o => o.status === 'confirmed')
     .reduce((sum, o) => sum + (o.total || 0), 0);
 
-  // Заказы за сегодня
+  // ������ �� �������
   const today = new Date().toDateString();
   const todayOrders = orders.filter(o => new Date(o.date).toDateString() === today);
   const todayRevenue = todayOrders
     .filter(o => o.status === 'confirmed')
     .reduce((sum, o) => sum + (o.total || 0), 0);
 
-  // Последние 5 заказов
+  // ��������� 5 �������
   const recent = [...orders]
     .sort((a, b) => new Date(b.date) - new Date(a.date))
     .slice(0, 5);
 
-  let text = `📊 *Статистика заказов*\n\n`;
-  text += `📦 Всего заказов: *${total}*\n`;
-  text += `⏳ Ожидают: *${pending}*\n`;
-  text += `✅ Подтверждено: *${confirmed}*\n`;
-  text += `❌ Отменено: *${cancelled}*\n\n`;
-  text += `💰 Выручка (подтв.): *${formatPrice(totalRevenue)}*\n`;
-  text += `📅 Сегодня заказов: *${todayOrders.length}* на *${formatPrice(todayRevenue)}*\n`;
+  let text = `?? *���������� �������*\n\n`;
+  text += `?? ����� �������: *${total}*\n`;
+  text += `? �������: *${pending}*\n`;
+  text += `? ������������: *${confirmed}*\n`;
+  text += `? ��������: *${cancelled}*\n\n`;
+  text += `?? ������� (�����.): *${formatPrice(totalRevenue)}*\n`;
+  text += `?? ������� �������: *${todayOrders.length}* �� *${formatPrice(todayRevenue)}*\n`;
 
   if (recent.length > 0) {
-    text += `\n🕐 *Последние заказы:*\n`;
+    text += `\n?? *��������� ������:*\n`;
     recent.forEach(o => {
-      const statusIcon = o.status === 'confirmed' ? '✅' : o.status === 'cancelled' ? '❌' : '⏳';
+      const statusIcon = o.status === 'confirmed' ? '?' : o.status === 'cancelled' ? '?' : '?';
       const date = new Date(o.date).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-      text += `${statusIcon} #${o.id} — ${formatPrice(o.total)} — @${o.username || 'нет'} (${date})\n`;
+      text += `${statusIcon} #${o.id} � ${formatPrice(o.total)} � @${o.username || '���'} (${date})\n`;
     });
   }
 
   const keyboard = {
     inline_keyboard: [
-      [{ text: '🗑 Очистить все заказы', callback_data: 'admin_stats_clear_confirm' }],
-      [{ text: '⬅️ Назад', callback_data: 'admin_panel' }]
+      [{ text: '?? �������� ��� ������', callback_data: 'admin_stats_clear_confirm' }],
+      [{ text: '?? �����', callback_data: 'admin_panel' }]
     ]
   };
 
@@ -1550,7 +1261,7 @@ function showAdminStats(chatId, messageId = null) {
   }
 }
 
-// Отзывы для админа
+// ������ ��� ������
 function showAdminReviews(chatId, messageId = null, page = 0) {
   const reviews = getReviews();
   const stats = getStats();
@@ -1558,42 +1269,42 @@ function showAdminReviews(chatId, messageId = null, page = 0) {
   const totalPages = Math.max(1, Math.ceil(reviews.length / perPage));
   const slice = reviews.slice(page * perPage, page * perPage + perPage);
 
-  let text = `⭐ *Отзывы покупателей*\n`;
-  text += `Всего: *${stats.count}* | Средняя оценка: *${stats.avg}*\n\n`;
+  let text = `? *������ �����������*\n`;
+  text += `�����: *${stats.count}* | ������� ������: *${stats.avg}*\n\n`;
 
   if (slice.length === 0) {
-    text += '_Отзывов пока нет_';
+    text += '_������� ���� ���_';
   } else {
     slice.forEach((r, i) => {
-      const stars = '⭐'.repeat(r.rating);
+      const stars = '?'.repeat(r.rating);
       const date = new Date(r.date).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-      const name = r.username ? `@${r.username}` : (r.firstName || 'Покупатель');
-      const photoMark = r.photoFileId ? ' 📸' : '';
-      text += `${page * perPage + i + 1}. ${stars} *${name}*${photoMark} • ${date}\n`;
+      const name = r.username ? `@${r.username}` : (r.firstName || '����������');
+      const photoMark = r.photoFileId ? ' ??' : '';
+      text += `${page * perPage + i + 1}. ${stars} *${name}*${photoMark} � ${date}\n`;
       if (r.text) text += `   _${r.text}_\n`;
       text += `\n`;
     });
   }
 
-  // Кнопки удаления + просмотра фото для каждого отзыва на странице
+  // ������ �������� + ��������� ���� ��� ������� ������ �� ��������
   const deleteButtons = slice.map((r, i) => {
-    const row = [{ text: `🗑 Удалить #${page * perPage + i + 1}`, callback_data: `review_delete_${r.id}` }];
+    const row = [{ text: `?? ������� #${page * perPage + i + 1}`, callback_data: `review_delete_${r.id}` }];
     if (r.photoFileId) {
-      row.unshift({ text: `📸 Фото #${page * perPage + i + 1}`, callback_data: `review_photo_${r.id}` });
+      row.unshift({ text: `?? ���� #${page * perPage + i + 1}`, callback_data: `review_photo_${r.id}` });
     }
     return row;
   });
 
-  // Пагинация
+  // ���������
   const navRow = [];
-  if (page > 0)               navRow.push({ text: '⬅️', callback_data: `admin_reviews_page_${page - 1}` });
-  if (page < totalPages - 1)  navRow.push({ text: '➡️', callback_data: `admin_reviews_page_${page + 1}` });
+  if (page > 0)               navRow.push({ text: '??', callback_data: `admin_reviews_page_${page - 1}` });
+  if (page < totalPages - 1)  navRow.push({ text: '??', callback_data: `admin_reviews_page_${page + 1}` });
 
   const keyboard = {
     inline_keyboard: [
       ...deleteButtons,
       ...(navRow.length ? [navRow] : []),
-      [{ text: '⬅️ Назад', callback_data: 'admin_panel' }]
+      [{ text: '?? �����', callback_data: 'admin_panel' }]
     ]
   };
 
@@ -1611,16 +1322,16 @@ function showAdminReviews(chatId, messageId = null, page = 0) {
   }
 }
 
-// Админ-панель
+// �����-������
 function showAdminPanel(chatId, messageId = null) {
   const keyboard = [
-    [{ text: '📦 Управление товарами', callback_data: 'admin_products' }],
-    [{ text: '📊 Статистика заказов',  callback_data: 'admin_stats' }],
-    [{ text: '⭐ Отзывы',              callback_data: 'admin_reviews' }],
-    [{ text: '🏠 Главное меню',        callback_data: 'main_menu' }]
+    [{ text: '?? ���������� ��������', callback_data: 'admin_products' }],
+    [{ text: '?? ���������� �������',  callback_data: 'admin_stats' }],
+    [{ text: '? ������',              callback_data: 'admin_reviews' }],
+    [{ text: '?? ������� ����',        callback_data: 'main_menu' }]
   ];
 
-  const text = '⚙️ *Админ-панель*\n\nВыберите действие:';
+  const text = '?? *�����-������*\n\n�������� ��������:';
 
   if (messageId) {
     bot.editMessageText(text, {
@@ -1642,17 +1353,17 @@ function showAdminPanel(chatId, messageId = null) {
   }
 }
 
-// Управление товарами - выбор категории
+// ���������� �������� - ����� ���������
 function showAdminProducts(chatId, messageId = null) {
   const keyboard = [
-    [{ text: '💧 Жидкости', callback_data: 'admin_cat_liquids' }],
-    [{ text: '❤️‍🔥 Одноразки/подики', callback_data: 'admin_cat_disposable' }],
-    [{ text: '📍 Расходники', callback_data: 'admin_cat_accessories' }],
-    [{ text: '🧃 Энергетики', callback_data: 'admin_cat_energy' }],
-    [{ text: '⬅️ Назад', callback_data: 'admin_panel' }]
+    [{ text: '?? ��������', callback_data: 'admin_cat_liquids' }],
+    [{ text: '????? ���������/������', callback_data: 'admin_cat_disposable' }],
+    [{ text: '?? ����������', callback_data: 'admin_cat_accessories' }],
+    [{ text: '?? ����������', callback_data: 'admin_cat_energy' }],
+    [{ text: '?? �����', callback_data: 'admin_panel' }]
   ];
 
-  const text = '📦 *Управление товарами*\n\nВыберите категорию:';
+  const text = '?? *���������� ��������*\n\n�������� ���������:';
 
   if (messageId) {
     bot.editMessageText(text, {
@@ -1669,7 +1380,7 @@ function showAdminProducts(chatId, messageId = null) {
   }
 }
 
-// Список товаров категории для админа
+// ������ ������� ��������� ��� ������
 function showAdminCategoryProducts(chatId, categoryId, messageId = null) {
   const category = categories.find(c => c.id === categoryId);
   const categoryProducts = products.filter(p => p.categoryId === categoryId);
@@ -1677,16 +1388,16 @@ function showAdminCategoryProducts(chatId, categoryId, messageId = null) {
   const keyboard = [];
   
   categoryProducts.forEach(product => {
-    const stockIcon = product.enabled === false ? '❌' : '✅';
+    const stockIcon = product.enabled === false ? '?' : '?';
     keyboard.push([{ 
       text: `${stockIcon} ${product.name}`, 
       callback_data: `admin_product_${product.id}` 
     }]);
   });
   
-  keyboard.push([{ text: '⬅️ Назад', callback_data: 'admin_products' }]);
+  keyboard.push([{ text: '?? �����', callback_data: 'admin_products' }]);
 
-  const text = `📦 *${category.name}*\n\nВыберите товар для управления:`;
+  const text = `?? *${category.name}*\n\n�������� ����� ��� ����������:`;
 
   bot.editMessageText(text, {
     chat_id: chatId,
@@ -1696,71 +1407,71 @@ function showAdminCategoryProducts(chatId, categoryId, messageId = null) {
   });
 }
 
-// Управление конкретным товаром
+// ���������� ���������� �������
 function showAdminProductDetail(chatId, productId, messageId = null) {
   const product = products.find(p => p.id === productId);
   
   if (!product) return;
 
-  let text = `📦 *${product.name}*\n\n`;
-  text += `💰 Цена: ${formatPrice(product.price)}\n\n`;
+  let text = `?? *${product.name}*\n\n`;
+  text += `?? ����: ${formatPrice(product.price)}\n\n`;
 
-  // Если есть цвета - показываем их
+  // ���� ���� ����� - ���������� ��
   if (product.colors && product.colors.length > 0) {
     const enabledCount = product.colors.filter(c =>
       typeof c === 'string' || c.enabled === undefined || c.enabled === true
     ).length;
     const total = product.colors.length;
-    text += `*Цвета (${enabledCount} / ${total} активно):*\n`;
+    text += `*����� (${enabledCount} / ${total} �������):*\n`;
     product.colors.slice(0, 8).forEach((color) => {
       const colorName = typeof color === 'object' ? color.name : color;
       const isEnabled = typeof color === 'object' ? (color.enabled === undefined || color.enabled === true) : true;
-      text += `${isEnabled ? '✅' : '❌'} ${colorName}\n`;
+      text += `${isEnabled ? '?' : '?'} ${colorName}\n`;
     });
     if (product.colors.length > 8) {
-      text += `... и ещё ${product.colors.length - 8}\n`;
+      text += `... � ��� ${product.colors.length - 8}\n`;
     }
   }
-  // Если есть вкусы - показываем их статус
+  // ���� ���� ����� - ���������� �� ������
   else if (product.flavors && product.flavors.length > 0) {
-    text += `*Вкусы:*\n`;
+    text += `*�����:*\n`;
     product.flavors.forEach((flavor, index) => {
       const flavorData = typeof flavor === 'object' ? flavor : { name: flavor, stock: '', enabled: true };
       const isEnabled = flavorData.enabled === undefined || flavorData.enabled === true;
-      const status = isEnabled ? '✅' : '❌';
+      const status = isEnabled ? '?' : '?';
       text += `${status} ${flavorData.name}`;
-      if (flavorData.stock) text += ` — ${flavorData.stock}`;
+      if (flavorData.stock) text += ` � ${flavorData.stock}`;
       text += `\n`;
     });
   }
 
   const keyboard = [];
 
-  // Кнопки управления цветами
+  // ������ ���������� �������
   if (product.colors && product.colors.length > 0) {
-    keyboard.push([{ text: '🎨 Управление цветами', callback_data: `admin_flavors_${product.id}` }]);
+    keyboard.push([{ text: '?? ���������� �������', callback_data: `admin_flavors_${product.id}` }]);
   }
-  // Кнопки управления вкусами
+  // ������ ���������� �������
   else if (product.flavors && product.flavors.length > 0) {
-    keyboard.push([{ text: '🎨 Управление вкусами', callback_data: `admin_flavors_${product.id}` }]);
+    keyboard.push([{ text: '?? ���������� �������', callback_data: `admin_flavors_${product.id}` }]);
   }
 
-  // Кнопки управления вариантами (options — например 0.4/0.6/0.8 Ом)
+  // ������ ���������� ���������� (options � �������� 0.4/0.6/0.8 ��)
   if (product.options && product.options.length > 0) {
-    keyboard.push([{ text: '⚙️ Управление вариантами', callback_data: `admin_options_${product.id}` }]);
+    keyboard.push([{ text: '?? ���������� ����������', callback_data: `admin_options_${product.id}` }]);
   }
 
-  // Кнопка вкл/выкл для товаров без вкусов/цветов (простые товары с полем enabled)
+  // ������ ���/���� ��� ������� ��� ������/������ (������� ������ � ����� enabled)
   if (!product.flavors && !product.colors && product.enabled !== undefined) {
     const isOn = product.enabled;
     keyboard.push([{
-      text: isOn ? '🔴 Выключить товар' : '🟢 Включить товар',
+      text: isOn ? '?? ��������� �����' : '?? �������� �����',
       callback_data: `admin_producttoggle_${product.id}`
     }]);
   }
 
   keyboard.push([
-    { text: '⬅️ Назад', callback_data: `admin_cat_${product.categoryId}` }
+    { text: '?? �����', callback_data: `admin_cat_${product.categoryId}` }
   ]);
 
   bot.editMessageText(text, {
@@ -1771,23 +1482,23 @@ function showAdminProductDetail(chatId, productId, messageId = null) {
   });
 }
 
-// Управление вкусами товара
+// ���������� ������� ������
 function showAdminFlavors(chatId, productId, messageId = null) {
   const product = products.find(p => p.id === productId);
   
   if (!product) return;
 
-  // Обработка цветов — кнопки с toggle (как у вкусов)
+  // ��������� ������ � ������ � toggle (��� � ������)
   if (product.colors && product.colors.length > 0) {
-    let text = `🎨 *Управление цветами: ${product.name}*\n\n`;
-    text += `Нажмите на цвет чтобы включить/выключить его в магазине:\n\n`;
+    let text = `?? *���������� �������: ${product.name}*\n\n`;
+    text += `������� �� ���� ����� ��������/��������� ��� � ��������:\n\n`;
 
     const keyboard = [];
 
     product.colors.forEach((color, index) => {
       const colorName = typeof color === 'object' ? color.name : color;
       const isEnabled = typeof color === 'object' ? (color.enabled === undefined || color.enabled === true) : true;
-      const status = isEnabled ? '✅' : '❌';
+      const status = isEnabled ? '?' : '?';
 
       text += `${status} ${colorName}\n`;
 
@@ -1797,7 +1508,7 @@ function showAdminFlavors(chatId, productId, messageId = null) {
       }]);
     });
 
-    keyboard.push([{ text: '⬅️ Назад', callback_data: `admin_product_${product.id}` }]);
+    keyboard.push([{ text: '?? �����', callback_data: `admin_product_${product.id}` }]);
 
     if (messageId) {
       bot.editMessageText(text, {
@@ -1821,45 +1532,45 @@ function showAdminFlavors(chatId, productId, messageId = null) {
     return;
   }
 
-  // Обработка вкусов
+  // ��������� ������
   if (!product.flavors) return;
 
-  let text = `🎨 *Управление вкусами: ${product.name}*\n\n`;
-  text += `Нажмите на вкус чтобы включить/выключить его в магазине:\n\n`;
+  let text = `?? *���������� �������: ${product.name}*\n\n`;
+  text += `������� �� ���� ����� ��������/��������� ��� � ��������:\n\n`;
 
   const keyboard = [];
 
   product.flavors.forEach((flavor, index) => {
     const flavorData = typeof flavor === 'object' ? flavor : { name: flavor, stock: '', enabled: true };
-    // Если enabled не определен или true - считаем включенным
+    // ���� enabled �� ��������� ��� true - ������� ����������
     const isEnabled = flavorData.enabled === undefined || flavorData.enabled === true;
-    const status = isEnabled ? '✅' : '❌';
+    const status = isEnabled ? '?' : '?';
     const buttonText = `${status} ${flavorData.name}`;
     
     text += `${status} ${flavorData.name}`;
-    if (flavorData.stock) text += ` — ${flavorData.stock}`;
+    if (flavorData.stock) text += ` � ${flavorData.stock}`;
     text += `\n`;
 
-    // Кнопка вкл/выкл + кнопка удаления рядом
+    // ������ ���/���� + ������ �������� �����
     keyboard.push([
       { 
         text: buttonText, 
         callback_data: `admin_toggle_${product.id}_${index}` 
       },
       {
-        text: '🗑️',
+        text: '???',
         callback_data: `admin_deleteflavor_${product.id}_${index}`
       }
     ]);
   });
 
-  // Кнопка "Отключить все" только для жидкостей
+  // ������ "��������� ���" ������ ��� ���������
   if (product.categoryId === 'liquids') {
-    keyboard.push([{ text: '🚫 Отключить все', callback_data: `admin_disableall_${product.id}` }]);
-    keyboard.push([{ text: '➕ Добавить вкусы', callback_data: `admin_addflavors_${product.id}` }]);
+    keyboard.push([{ text: '?? ��������� ���', callback_data: `admin_disableall_${product.id}` }]);
+    keyboard.push([{ text: '? �������� �����', callback_data: `admin_addflavors_${product.id}` }]);
   }
 
-  keyboard.push([{ text: '⬅️ Назад', callback_data: `admin_product_${product.id}` }]);
+  keyboard.push([{ text: '?? �����', callback_data: `admin_product_${product.id}` }]);
 
   if (messageId) {
     bot.editMessageText(text, {
@@ -1868,7 +1579,7 @@ function showAdminFlavors(chatId, productId, messageId = null) {
       parse_mode: 'Markdown',
       reply_markup: { inline_keyboard: keyboard }
     }).catch(() => {
-      // editMessageText не сработало — удаляем старое и отправляем новое
+      // editMessageText �� ��������� � ������� ������ � ���������� �����
       bot.deleteMessage(chatId, messageId).catch(() => {});
       bot.sendMessage(chatId, text, {
         parse_mode: 'Markdown',
@@ -1883,20 +1594,20 @@ function showAdminFlavors(chatId, productId, messageId = null) {
   }
 }
 
-// Управление вариантами товара (options — 0.4/0.6/0.8 Ом и т.п.)
+// ���������� ���������� ������ (options � 0.4/0.6/0.8 �� � �.�.)
 function showAdminOptions(chatId, productId, messageId = null) {
   const product = products.find(p => p.id === productId);
   if (!product || !product.options) return;
 
-  let text = `⚙️ *Варианты: ${product.name}*\n\n`;
-  text += `Нажмите на вариант чтобы включить/выключить его в магазине:\n\n`;
+  let text = `?? *��������: ${product.name}*\n\n`;
+  text += `������� �� ������� ����� ��������/��������� ��� � ��������:\n\n`;
 
   const keyboard = [];
 
   product.options.forEach((option, index) => {
     const optionData = typeof option === 'object' ? option : { name: option, enabled: true };
     const isEnabled = optionData.enabled === undefined || optionData.enabled === true;
-    const status = isEnabled ? '✅' : '❌';
+    const status = isEnabled ? '?' : '?';
     const optionName = typeof option === 'object' ? option.name : option;
 
     text += `${status} ${optionName}\n`;
@@ -1907,7 +1618,7 @@ function showAdminOptions(chatId, productId, messageId = null) {
     }]);
   });
 
-  keyboard.push([{ text: '⬅️ Назад', callback_data: `admin_product_${product.id}` }]);
+  keyboard.push([{ text: '?? �����', callback_data: `admin_product_${product.id}` }]);
 
   if (messageId) {
     bot.editMessageText(text, {
@@ -1929,7 +1640,7 @@ function showAdminOptions(chatId, productId, messageId = null) {
   }
 }
 
-// Включить/выключить товар целиком (для простых товаров без вкусов/цветов)
+// ��������/��������� ����� ������� (��� ������� ������� ��� ������/������)
 function toggleProduct(productId) {
   const product = products.find(p => p.id === productId);
   if (!product) return false;
@@ -1939,15 +1650,15 @@ function toggleProduct(productId) {
   try {
     const fs = require('fs');
     const path = require('path');
-    const contentJs = '// Категории товаров\nconst categories = ' + JSON.stringify(categories, null, 2) + ';\n\n// Товары\nconst products = ' + JSON.stringify(products, null, 2) + ';\n\nmodule.exports = { products, categories };\n';
+    const contentJs = '// ��������� �������\nconst categories = ' + JSON.stringify(categories, null, 2) + ';\n\n// ������\nconst products = ' + JSON.stringify(products, null, 2) + ';\n\nmodule.exports = { products, categories };\n';
     fs.writeFileSync(path.join(__dirname, '..', 'data', 'products.js'), contentJs, 'utf8');
-    console.log(`✅ Товар ${productId} теперь ${product.enabled ? 'включён' : 'выключен'}`);
+    console.log(`? ����� ${productId} ������ ${product.enabled ? '�������' : '��������'}`);
   } catch(e) { console.error('Save error:', e.message); }
 
   return true;
 }
 
-// Отключить все вкусы у продукта
+// ��������� ��� ����� � ��������
 function disableAllFlavors(productId) {
   const product = products.find(p => p.id === productId);
   if (!product || !product.flavors) return false;
@@ -1960,19 +1671,19 @@ function disableAllFlavors(productId) {
     }
   });
 
-  // Сохраняем в файл
+  // ��������� � ����
   try {
     const fs = require('fs');
     const path = require('path');
-    const contentJs = '// Категории товаров\nconst categories = ' + JSON.stringify(categories, null, 2) + ';\n\n// Товары\nconst products = ' + JSON.stringify(products, null, 2) + ';\n\nmodule.exports = { products, categories };\n';
+    const contentJs = '// ��������� �������\nconst categories = ' + JSON.stringify(categories, null, 2) + ';\n\n// ������\nconst products = ' + JSON.stringify(products, null, 2) + ';\n\nmodule.exports = { products, categories };\n';
     fs.writeFileSync(path.join(__dirname, '..', 'data', 'products.js'), contentJs, 'utf8');
-    console.log(`✅ Все вкусы отключены: ${productId}`);
+    console.log(`? ��� ����� ���������: ${productId}`);
   } catch(e) { console.error('Save products error:', e.message); }
 
   return true;
 }
 
-// Переключить вариант (вкл/выкл)
+// ����������� ������� (���/����)
 function toggleOption(productId, optionIndex) {
   const product = products.find(p => p.id === productId);
   if (!product || !product.options || isNaN(optionIndex) || product.options[optionIndex] === undefined) return false;
@@ -1981,26 +1692,26 @@ function toggleOption(productId, optionIndex) {
   if (typeof option === 'object') {
     option.enabled = !(option.enabled === undefined || option.enabled === true);
   } else {
-    // Конвертируем строку в объект
+    // ������������ ������ � ������
     product.options[optionIndex] = {
       name: option,
-      enabled: false // первый тогл — выключаем
+      enabled: false // ������ ���� � ���������
     };
   }
 
-  // Сохраняем в data/products.js
+  // ��������� � data/products.js
   try {
     const fs = require('fs');
     const path = require('path');
-    const contentJs = '// Категории товаров\nconst categories = ' + JSON.stringify(categories, null, 2) + ';\n\n// Товары\nconst products = ' + JSON.stringify(products, null, 2) + ';\n\nmodule.exports = { products, categories };\n';
+    const contentJs = '// ��������� �������\nconst categories = ' + JSON.stringify(categories, null, 2) + ';\n\n// ������\nconst products = ' + JSON.stringify(products, null, 2) + ';\n\nmodule.exports = { products, categories };\n';
     fs.writeFileSync(path.join(__dirname, '..', 'data', 'products.js'), contentJs, 'utf8');
-    console.log(`✅ Сохранено: ${productId}, вариант ${optionIndex}`);
+    console.log(`? ���������: ${productId}, ������� ${optionIndex}`);
   } catch(e) { console.error('Save options error:', e.message); }
 
   return true;
 }
 
-// Переключить вкус (вкл/выкл)
+// ����������� ���� (���/����)
 function toggleFlavor(productId, flavorIndex) {
   const product = products.find(p => p.id === productId);
   
@@ -2009,14 +1720,14 @@ function toggleFlavor(productId, flavorIndex) {
   const flavor = product.flavors[flavorIndex];
   
   if (typeof flavor === 'object') {
-    // Переключаем enabled
+    // ����������� enabled
     if (flavor.enabled === undefined || flavor.enabled === true) {
       flavor.enabled = false;
     } else {
       flavor.enabled = true;
     }
   } else {
-    // Конвертируем строку в объект
+    // ������������ ������ � ������
     product.flavors[flavorIndex] = {
       name: flavor,
       stock: '',
@@ -2024,47 +1735,47 @@ function toggleFlavor(productId, flavorIndex) {
     };
   }
 
-  // Сохраняем в файл data/products.js (только для бота)
+  // ��������� � ���� data/products.js (������ ��� ����)
   try {
     const fs = require('fs');
     const path = require('path');
     
-    const contentJs = '// Категории товаров\nconst categories = ' + JSON.stringify(categories, null, 2) + ';\n\n// Товары\nconst products = ' + JSON.stringify(products, null, 2) + ';\n\nmodule.exports = { products, categories };\n';
+    const contentJs = '// ��������� �������\nconst categories = ' + JSON.stringify(categories, null, 2) + ';\n\n// ������\nconst products = ' + JSON.stringify(products, null, 2) + ';\n\nmodule.exports = { products, categories };\n';
     fs.writeFileSync(path.join(__dirname, '..', 'data', 'products.js'), contentJs, 'utf8');
     
-    console.log(`✅ Сохранено в боте: ${productId}, вкус ${flavorIndex}`);
+    console.log(`? ��������� � ����: ${productId}, ���� ${flavorIndex}`);
   } catch(e) { console.error('Save products error:', e.message); }
   
-  // Синхронизируем с Redis в фоне (не блокируем)
+  // �������������� � Redis � ���� (�� ���������)
   if (redis) {
     redis.set('products', JSON.stringify({ products, categories }))
-      .then(() => console.log('✅ Redis обновлён после toggle вкуса'))
-      .catch(e => console.error('❌ Ошибка Redis при toggle:', e.message));
+      .then(() => console.log('? Redis ������� ����� toggle �����'))
+      .catch(e => console.error('? ������ Redis ��� toggle:', e.message));
   }
 
   return true;
 }
 
-// Удалить вкус и синхронизировать с Redis
+// ������� ���� � ���������������� � Redis
 async function deleteFlavor(productId, flavorIndex) {
   const product = products.find(p => p.id === productId);
   if (!product || !product.flavors || isNaN(flavorIndex) || !product.flavors[flavorIndex]) {
-    return { success: false, error: 'Вкус не найден' };
+    return { success: false, error: '���� �� ������' };
   }
 
   const deletedFlavor = product.flavors.splice(flavorIndex, 1)[0];
   const deletedFlavorName = typeof deletedFlavor === 'string' ? deletedFlavor : deletedFlavor.name;
 
-  // Сохраняем в файл data/products.js
+  // ��������� � ���� data/products.js
   try {
     const fs = require('fs');
     const path = require('path');
-    const contentJs = '// Категории товаров\nconst categories = ' + JSON.stringify(categories, null, 2) + ';\n\n// Товары\nconst products = ' + JSON.stringify(products, null, 2) + ';\n\nmodule.exports = { products, categories };\n';
+    const contentJs = '// ��������� �������\nconst categories = ' + JSON.stringify(categories, null, 2) + ';\n\n// ������\nconst products = ' + JSON.stringify(products, null, 2) + ';\n\nmodule.exports = { products, categories };\n';
     fs.writeFileSync(path.join(__dirname, '..', 'data', 'products.js'), contentJs, 'utf8');
-    console.log(`✅ Вкус "${deletedFlavorName}" удалён из файла`);
+    console.log(`? ���� "${deletedFlavorName}" ����� �� �����`);
   } catch(e) { console.error('Save products error:', e.message); }
 
-  // Синхронизируем с Redis (для Mini App)
+  // �������������� � Redis (��� Mini App)
   if (redis) {
     try {
       const dataToSave = {
@@ -2072,16 +1783,16 @@ async function deleteFlavor(productId, flavorIndex) {
         categories: categories
       };
       await redis.set('products', JSON.stringify(dataToSave));
-      console.log(`✅ Redis обновлён после удаления вкуса "${deletedFlavorName}"`);
+      console.log(`? Redis ������� ����� �������� ����� "${deletedFlavorName}"`);
     } catch(e) {
-      console.error('❌ Ошибка сохранения в Redis:', e.message);
+      console.error('? ������ ���������� � Redis:', e.message);
     }
   }
 
   return { success: true, deletedFlavor: deletedFlavorName };
 }
 
-// Переключить цвет (вкл/выкл)
+// ����������� ���� (���/����)
 function toggleColor(productId, colorIndex) {
   const product = products.find(p => p.id === productId);
   if (!product || !product.colors || isNaN(colorIndex) || product.colors[colorIndex] === undefined) return false;
@@ -2091,100 +1802,100 @@ function toggleColor(productId, colorIndex) {
   if (typeof color === 'object') {
     color.enabled = !(color.enabled === undefined || color.enabled === true);
   } else {
-    // Конвертируем строку в объект
+    // ������������ ������ � ������
     product.colors[colorIndex] = {
       name: color,
-      enabled: false // первый тогл — выключаем
+      enabled: false // ������ ���� � ���������
     };
   }
 
-  // Сохраняем в data/products.js
+  // ��������� � data/products.js
   try {
     const fs = require('fs');
     const path = require('path');
-    const contentJs = '// Категории товаров\nconst categories = ' + JSON.stringify(categories, null, 2) + ';\n\n// Товары\nconst products = ' + JSON.stringify(products, null, 2) + ';\n\nmodule.exports = { products, categories };\n';
+    const contentJs = '// ��������� �������\nconst categories = ' + JSON.stringify(categories, null, 2) + ';\n\n// ������\nconst products = ' + JSON.stringify(products, null, 2) + ';\n\nmodule.exports = { products, categories };\n';
     fs.writeFileSync(path.join(__dirname, '..', 'data', 'products.js'), contentJs, 'utf8');
-    console.log(`✅ Сохранено: ${productId}, цвет ${colorIndex}`);
+    console.log(`? ���������: ${productId}, ���� ${colorIndex}`);
   } catch(e) { console.error('Save colors error:', e.message); }
 
   return true;
 }
 
-// Показать заказы пользователя
+// �������� ������ ������������
 function showUserOrders(chatId, userId) {
   const orders = getOrders().filter(o => o.userId === userId);
 
   if (orders.length === 0) {
-    bot.sendMessage(chatId, '📦 У вас пока нет заказов');
+    bot.sendMessage(chatId, '?? � ��� ���� ��� �������');
     return;
   }
 
-  let message = '📦 *Ваши заказы:*\n\n';
+  let message = '?? *���� ������:*\n\n';
 
   orders.forEach(order => {
-    const status = order.status === 'confirmed' ? '✅' : order.status === 'cancelled' ? '❌' : '⏳';
-    message += `${status} Заказ #${order.id}\n`;
-    message += `💰 Сумма: ${formatPrice(order.total)}\n`;
-    message += `📅 Дата: ${new Date(order.date).toLocaleString('ru-RU')}\n\n`;
+    const status = order.status === 'confirmed' ? '?' : order.status === 'cancelled' ? '?' : '?';
+    message += `${status} ����� #${order.id}\n`;
+    message += `?? �����: ${formatPrice(order.total)}\n`;
+    message += `?? ����: ${new Date(order.date).toLocaleString('ru-RU')}\n\n`;
   });
 
   bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
 }
 
-// Обработка callback запросов
+// ��������� callback ��������
 bot.on('callback_query', async (query) => {
   const chatId = query.message.chat.id;
   const data = query.data;
   const userId = query.from.id;
   const username = query.from.username;
 
-  // Обработка кнопки "Я подписался" — проверяем без блокировки
+  // ��������� ������ "� ����������" � ��������� ��� ����������
   if (data === 'check_subscription') {
     if (await isSubscribed(userId)) {
-      bot.answerCallbackQuery(query.id, { text: '✅ Подписка подтверждена!' });
-      // Удаляем сообщение с просьбой подписаться и запускаем /start
+      bot.answerCallbackQuery(query.id, { text: '? �������� ������������!' });
+      // ������� ��������� � �������� ����������� � ��������� /start
       bot.deleteMessage(chatId, query.message.message_id).catch(() => {});
-      const firstName = (query.from.first_name || 'друг').replace(/[*_`\[\]()~>#+=|{}.!\\-]/g, '\\$&');
+      const firstName = (query.from.first_name || '����').replace(/[*_`\[\]()~>#+=|{}.!\\-]/g, '\\$&');
       const isAdminUser = isAdmin(userId);
       const mainMenu  = buildMainMenu(WEBAPP_URL, userId);
       const adminMenu = buildAdminMenu(WEBAPP_URL, userId);
       const welcomeText =
-        `Привет, ${firstName}! 👋\n\n` +
-        `Добро пожаловать в PuffNow_63! 🏪\n\n` +
-        `💨 У нас большой ассортимент вейп-продукции:\n` +
-        `• Одноразки/подики\n` +
-        `• Жидкости\n` +
-        `• Расходники\n` +
-        `• Энергетики\n\n` +
-        `Выберите действие из меню ниже:`;
+        `������, ${firstName}! ??\n\n` +
+        `����� ���������� � PuffNow_63! ??\n\n` +
+        `?? � ��� ������� ����������� ����-���������:\n` +
+        `� ���������/������\n` +
+        `� ��������\n` +
+        `� ����������\n` +
+        `� ����������\n\n` +
+        `�������� �������� �� ���� ����:`;
       bot.sendPhoto(chatId, 'AgACAgIAAxkBAAIBbGpsZeQTcBF6z6O3yS6CO_2eq75mAALvHWsbFE5hS_nvyP8d07FrAQADAgADeQADPQQ', {
         caption: welcomeText,
         ...(isAdminUser ? adminMenu : mainMenu)
       });
     } else {
-      bot.answerCallbackQuery(query.id, { text: '❌ Вы ещё не подписались на канал!', show_alert: true });
+      bot.answerCallbackQuery(query.id, { text: '? �� ��� �� ����������� �� �����!', show_alert: true });
     }
     return;
   }
 
-  // Пропустить добавление фото товара
+  // ���������� ���������� ���� ������
   if (data === 'skip_product_image') {
     if (addProductState[userId] && addProductState[userId].step === 'image') {
       const state = addProductState[userId];
-      state.data.location = 'Все точки';
+      state.data.location = '��� �����';
 
-      // Сохраняем товар без фото
+      // ��������� ����� ��� ����
       const result = addProduct(state.data);
       
       delete addProductState[userId];
 
       if (result.success) {
         const summary = 
-          `✅ *Товар успешно добавлен!*\n\n` +
-          `📦 Название: ${state.data.name}\n` +
-          `💰 Цена: ${formatPrice(state.data.price)}\n` +
-          `🎨 Вкусов: ${state.data.flavors.length}\n` +
-          `🆔 ID: \`${result.product.id}\``;
+          `? *����� ������� ��������!*\n\n` +
+          `?? ��������: ${state.data.name}\n` +
+          `?? ����: ${formatPrice(state.data.price)}\n` +
+          `?? ������: ${state.data.flavors.length}\n` +
+          `?? ID: \`${result.product.id}\``;
 
         bot.deleteMessage(chatId, query.message.message_id).catch(() => {});
         bot.sendMessage(chatId, summary, {
@@ -2192,23 +1903,23 @@ bot.on('callback_query', async (query) => {
           ...buildAdminMenu(WEBAPP_URL, userId)
         });
       } else {
-        bot.answerCallbackQuery(query.id, { text: `❌ ${result.error}`, show_alert: true });
+        bot.answerCallbackQuery(query.id, { text: `? ${result.error}`, show_alert: true });
       }
     }
     return;
   }
 
-  // Выбор жидкости для добавления вкусов
+  // ����� �������� ��� ���������� ������
   if (data.startsWith('addflavor_')) {
     const productId = data.replace('addflavor_', '');
     const product = products.find(p => p.id === productId);
     
     if (!product) {
-      bot.answerCallbackQuery(query.id, { text: '❌ Товар не найден', show_alert: true });
+      bot.answerCallbackQuery(query.id, { text: '? ����� �� ������', show_alert: true });
       return;
     }
     
-    // Инициализируем состояние для добавления вкусов
+    // �������������� ��������� ��� ���������� ������
     addProductState[userId] = {
       step: 'add_flavors',
       productId: productId,
@@ -2217,15 +1928,15 @@ bot.on('callback_query', async (query) => {
     
     bot.deleteMessage(chatId, query.message.message_id).catch(() => {});
     bot.sendMessage(chatId,
-      `💧 *${product.name}*\n\n` +
-      `Введите новые вкусы через запятую (например: "Манго лед, Клубника, Дыня")\n\n` +
-      `Для отмены используйте /cancel`,
+      `?? *${product.name}*\n\n` +
+      `������� ����� ����� ����� ������� (��������: "����� ���, ��������, ����")\n\n` +
+      `��� ������ ����������� /cancel`,
       { parse_mode: 'Markdown' }
     );
     return;
   }
 
-  // Для всех остальных callback — проверяем подписку
+  // ��� ���� ��������� callback � ��������� ��������
   if (!(await isSubscribed(userId))) {
     bot.answerCallbackQuery(query.id);
     sendSubscribeMessage(chatId);
@@ -2234,12 +1945,12 @@ bot.on('callback_query', async (query) => {
 
   if (data === 'main_menu') {
     const mainMenuObj = buildMainMenu(WEBAPP_URL, userId);
-    bot.editMessageText('Главное меню:', {
+    bot.editMessageText('������� ����:', {
       chat_id: chatId,
       message_id: query.message.message_id,
       reply_markup: mainMenuObj.reply_markup
     }).catch(() => {
-      bot.sendMessage(chatId, 'Главное меню:', mainMenuObj);
+      bot.sendMessage(chatId, '������� ����:', mainMenuObj);
     });
     bot.answerCallbackQuery(query.id);
   } else if (data === 'categories' || data === 'back_categories') {
@@ -2254,30 +1965,30 @@ bot.on('callback_query', async (query) => {
     const targetChat = chat.getChat(targetUserId);
     if (targetChat) {
       chat.setAdminReplyMode(userId, targetUserId);
-      bot.answerCallbackQuery(query.id, { text: '✍️ Введите ответ в чат' });
+      bot.answerCallbackQuery(query.id, { text: '?? ������� ����� � ���' });
       bot.sendMessage(chatId,
-        `✍️ *Ответ пользователю:*\n👤 ${targetChat.firstName} (@${targetChat.username || 'нет'})\n📝 ID: \`${targetUserId}\`\n\nНапишите сообщение или /cancel для отмены`,
+        `?? *����� ������������:*\n?? ${targetChat.firstName} (@${targetChat.username || '���'})\n?? ID: \`${targetUserId}\`\n\n�������� ��������� ��� /cancel ��� ������`,
         { parse_mode: 'Markdown', reply_markup: { remove_keyboard: true } }
       );
     } else {
-      bot.answerCallbackQuery(query.id, { text: '❌ Пользователь закрыл чат' });
+      bot.answerCallbackQuery(query.id, { text: '? ������������ ������ ���' });
     }
   } else if (data.startsWith('history_')) {
     const targetUserId = parseInt(data.replace('history_', ''));
     const targetChat = chat.getChat(targetUserId);
     if (targetChat) {
       const messages = chat.getMessages(targetUserId, 10);
-      let historyText = `📜 *История чата*\n👤 ${targetChat.firstName} (@${targetChat.username || 'нет'})\n\n`;
+      let historyText = `?? *������� ����*\n?? ${targetChat.firstName} (@${targetChat.username || '���'})\n\n`;
       
       if (messages.length === 0) {
-        historyText += 'Сообщений пока нет';
+        historyText += '��������� ���� ���';
       } else {
         messages.forEach(msg => {
           const time = new Date(msg.timestamp).toLocaleString('ru-RU', { 
             hour: '2-digit', 
             minute: '2-digit' 
           });
-          const icon = msg.from === 'user' ? '👤' : '👨‍💼';
+          const icon = msg.from === 'user' ? '??' : '?????';
           historyText += `${icon} _${time}_\n${msg.text}\n\n`;
         });
       }
@@ -2286,13 +1997,13 @@ bot.on('callback_query', async (query) => {
         parse_mode: 'Markdown',
         reply_markup: {
           inline_keyboard: [[
-            { text: '✍️ Ответить', callback_data: `reply_${targetUserId}` }
+            { text: '?? ��������', callback_data: `reply_${targetUserId}` }
           ]]
         }
       });
       bot.answerCallbackQuery(query.id);
     } else {
-      bot.answerCallbackQuery(query.id, { text: '❌ Чат не найден' });
+      bot.answerCallbackQuery(query.id, { text: '? ��� �� ������' });
     }
 
   } else if (data === 'show_cart') {
@@ -2308,22 +2019,22 @@ bot.on('callback_query', async (query) => {
     showAdminStats(chatId, query.message.message_id);
     bot.answerCallbackQuery(query.id);
   } else if (data === 'admin_reviews') {
-    if (!isAdmin(userId)) { bot.answerCallbackQuery(query.id, { text: '❌ Доступ запрещён' }); return; }
+    if (!isAdmin(userId)) { bot.answerCallbackQuery(query.id, { text: '? ������ ��������' }); return; }
     showAdminReviews(chatId, query.message.message_id, 0);
     bot.answerCallbackQuery(query.id);
   } else if (data.startsWith('admin_reviews_page_')) {
-    if (!isAdmin(userId)) { bot.answerCallbackQuery(query.id, { text: '❌ Доступ запрещён' }); return; }
+    if (!isAdmin(userId)) { bot.answerCallbackQuery(query.id, { text: '? ������ ��������' }); return; }
     const page = parseInt(data.replace('admin_reviews_page_', '')) || 0;
     showAdminReviews(chatId, query.message.message_id, page);
     bot.answerCallbackQuery(query.id);
   } else if (data === 'admin_stats_clear_confirm') {
-    // Показываем подтверждение очистки
-    const text = `⚠️ *ВНИМАНИЕ!*\n\nВы уверены, что хотите удалить *все заказы*?\n\nЭто действие нельзя отменить!`;
+    // ���������� ������������� �������
+    const text = `?? *��������!*\n\n�� �������, ��� ������ ������� *��� ������*?\n\n��� �������� ������ ��������!`;
     const keyboard = {
       inline_keyboard: [
         [
-          { text: '✅ Да, удалить всё', callback_data: 'admin_stats_clear_do' },
-          { text: '❌ Отмена', callback_data: 'admin_stats' }
+          { text: '? ��, ������� ��', callback_data: 'admin_stats_clear_do' },
+          { text: '? ������', callback_data: 'admin_stats' }
         ]
       ]
     };
@@ -2335,10 +2046,10 @@ bot.on('callback_query', async (query) => {
     }).catch(() => {});
     bot.answerCallbackQuery(query.id);
   } else if (data === 'admin_stats_clear_do') {
-    // Выполняем очистку
+    // ��������� �������
     clearOrders();
-    bot.answerCallbackQuery(query.id, { text: '✅ Все заказы удалены', show_alert: true });
-    // Возвращаемся к статистике
+    bot.answerCallbackQuery(query.id, { text: '? ��� ������ �������', show_alert: true });
+    // ������������ � ����������
     showAdminStats(chatId, query.message.message_id);
   } else if (data.startsWith('admin_cat_')) {
     const categoryId = data.replace('admin_cat_', '');
@@ -2357,45 +2068,45 @@ bot.on('callback_query', async (query) => {
     if (toggleProduct(productId)) {
       const product = products.find(p => p.id === productId);
       showAdminProductDetail(chatId, productId, query.message.message_id);
-      bot.answerCallbackQuery(query.id, { text: product.enabled ? '🟢 Товар включён' : '🔴 Товар выключен' });
+      bot.answerCallbackQuery(query.id, { text: product.enabled ? '?? ����� �������' : '?? ����� ��������' });
     } else {
-      bot.answerCallbackQuery(query.id, { text: '❌ Ошибка' });
+      bot.answerCallbackQuery(query.id, { text: '? ������' });
     }
   } else if (data.startsWith('admin_optiontoggle_')) {
     try {
       const toggleData = data.replace('admin_optiontoggle_', '');
-      // Находим индекс - это всё что после последнего _
+      // ������� ������ - ��� �� ��� ����� ���������� _
       const parts = toggleData.split('_');
       const optionIndex = parseInt(parts[parts.length - 1]);
-      // productId - это всё, кроме последнего элемента
+      // productId - ��� ��, ����� ���������� ��������
       const productId = parts.slice(0, -1).join('_');
       
       if (toggleOption(productId, optionIndex)) {
         showAdminOptions(chatId, productId, query.message.message_id);
-        bot.answerCallbackQuery(query.id, { text: '✅ Статус изменён' });
+        bot.answerCallbackQuery(query.id, { text: '? ������ �������' });
       } else {
-        bot.answerCallbackQuery(query.id, { text: '❌ Ошибка' });
+        bot.answerCallbackQuery(query.id, { text: '? ������' });
       }
     } catch (err) {
-      bot.answerCallbackQuery(query.id, { text: '❌ Ошибка: ' + err.message });
+      bot.answerCallbackQuery(query.id, { text: '? ������: ' + err.message });
     }
   } else if (data.startsWith('admin_colortoggle_')) {
     try {
       const toggleData = data.replace('admin_colortoggle_', '');
-      // Находим индекс - это всё что после последнего _
+      // ������� ������ - ��� �� ��� ����� ���������� _
       const parts = toggleData.split('_');
       const colorIndex = parseInt(parts[parts.length - 1]);
-      // productId - это всё, кроме последнего элемента
+      // productId - ��� ��, ����� ���������� ��������
       const productId = parts.slice(0, -1).join('_');
       
       if (toggleColor(productId, colorIndex)) {
         showAdminFlavors(chatId, productId, query.message.message_id);
-        bot.answerCallbackQuery(query.id, { text: '✅ Статус изменён' });
+        bot.answerCallbackQuery(query.id, { text: '? ������ �������' });
       } else {
-        bot.answerCallbackQuery(query.id, { text: '❌ Ошибка' });
+        bot.answerCallbackQuery(query.id, { text: '? ������' });
       }
     } catch (err) {
-      bot.answerCallbackQuery(query.id, { text: '❌ Ошибка: ' + err.message });
+      bot.answerCallbackQuery(query.id, { text: '? ������: ' + err.message });
     }
   } else if (data.startsWith('admin_flavors_')) {
     const productId = data.replace('admin_flavors_', '');
@@ -2405,21 +2116,21 @@ bot.on('callback_query', async (query) => {
     const productId = data.replace('admin_disableall_', '');
     if (disableAllFlavors(productId)) {
       showAdminFlavors(chatId, productId, query.message.message_id);
-      bot.answerCallbackQuery(query.id, { text: '🚫 Все вкусы отключены' });
+      bot.answerCallbackQuery(query.id, { text: '?? ��� ����� ���������' });
     } else {
-      bot.answerCallbackQuery(query.id, { text: '❌ Ошибка' });
+      bot.answerCallbackQuery(query.id, { text: '? ������' });
     }
   } else if (data.startsWith('admin_addflavors_')) {
-    // Кнопка "Добавить вкусы" из админ-панели
+    // ������ "�������� �����" �� �����-������
     const productId = data.replace('admin_addflavors_', '');
     const product = products.find(p => p.id === productId);
     
     if (!product) {
-      bot.answerCallbackQuery(query.id, { text: '❌ Товар не найден', show_alert: true });
+      bot.answerCallbackQuery(query.id, { text: '? ����� �� ������', show_alert: true });
       return;
     }
     
-    // Инициализируем состояние для добавления вкусов
+    // �������������� ��������� ��� ���������� ������
     addProductState[userId] = {
       step: 'add_flavors',
       productId: productId,
@@ -2428,40 +2139,40 @@ bot.on('callback_query', async (query) => {
     
     bot.deleteMessage(chatId, query.message.message_id).catch(() => {});
     bot.sendMessage(chatId,
-      `💧 *${product.name}*\n\n` +
-      `Введите новые вкусы через запятую (например: "Манго лед, Клубника, Дыня")\n\n` +
-      `Для отмены используйте /cancel`,
+      `?? *${product.name}*\n\n` +
+      `������� ����� ����� ����� ������� (��������: "����� ���, ��������, ����")\n\n` +
+      `��� ������ ����������� /cancel`,
       { parse_mode: 'Markdown' }
     );
     bot.answerCallbackQuery(query.id);
   } else if (data.startsWith('admin_toggle_')) {
     try {
       const toggleData = data.replace('admin_toggle_', '');
-      // Находим индекс - это всё что после последнего _
+      // ������� ������ - ��� �� ��� ����� ���������� _
       const parts = toggleData.split('_');
       const flavorIndex = parseInt(parts[parts.length - 1]);
-      // productId - это всё, кроме последнего элемента
+      // productId - ��� ��, ����� ���������� ��������
       const productId = parts.slice(0, -1).join('_');
       
       console.log('Toggle flavor:', productId, flavorIndex);
       
       if (toggleFlavor(productId, flavorIndex)) {
         showAdminFlavors(chatId, productId, query.message.message_id);
-        bot.answerCallbackQuery(query.id, { text: '✅ Статус изменен' });
+        bot.answerCallbackQuery(query.id, { text: '? ������ �������' });
       } else {
-        bot.answerCallbackQuery(query.id, { text: '❌ Ошибка' });
+        bot.answerCallbackQuery(query.id, { text: '? ������' });
       }
     } catch (err) {
       console.error('Error toggling flavor:', err);
-      bot.answerCallbackQuery(query.id, { text: '❌ Ошибка: ' + err.message });
+      bot.answerCallbackQuery(query.id, { text: '? ������: ' + err.message });
     }
   } else if (data.startsWith('admin_deleteflavor_')) {
     try {
       const deleteData = data.replace('admin_deleteflavor_', '');
-      // Находим индекс - это всё что после последнего _
+      // ������� ������ - ��� �� ��� ����� ���������� _
       const parts = deleteData.split('_');
       const flavorIndex = parseInt(parts[parts.length - 1]);
-      // productId - это всё, кроме последнего элемента
+      // productId - ��� ��, ����� ���������� ��������
       const productId = parts.slice(0, -1).join('_');
       
       console.log('Delete flavor:', productId, flavorIndex);
@@ -2469,13 +2180,13 @@ bot.on('callback_query', async (query) => {
       const result = await deleteFlavor(productId, flavorIndex);
       if (result.success) {
         showAdminFlavors(chatId, productId, query.message.message_id);
-        bot.answerCallbackQuery(query.id, { text: `✅ Вкус "${result.deletedFlavor}" удалён` });
+        bot.answerCallbackQuery(query.id, { text: `? ���� "${result.deletedFlavor}" �����` });
       } else {
-        bot.answerCallbackQuery(query.id, { text: '❌ Ошибка удаления' });
+        bot.answerCallbackQuery(query.id, { text: '? ������ ��������' });
       }
     } catch (err) {
       console.error('Error deleting flavor:', err);
-      bot.answerCallbackQuery(query.id, { text: '❌ Ошибка: ' + err.message });
+      bot.answerCallbackQuery(query.id, { text: '? ������: ' + err.message });
     }
   } else if (data === 'my_orders') {
     showUserOrders(chatId, userId);
@@ -2488,23 +2199,23 @@ bot.on('callback_query', async (query) => {
     const productId = data.replace('add_', '');
     const product = products.find(p => p.id === productId);
     
-    // Если у товара есть вкусы, цвета или опции — показываем выбор
+    // ���� � ������ ���� �����, ����� ��� ����� � ���������� �����
     if (product && (product.flavors || product.colors || product.options)) {
-      // Сбрасываем предыдущий выбор
+      // ���������� ���������� �����
       userCarts[`flavors_${chatId}_${productId}`] = [];
       showFlavorSelection(chatId, productId, query.message.message_id, []);
       bot.answerCallbackQuery(query.id);
     } else {
-      // Без вариантов — сразу добавляем
+      // ��� ��������� � ����� ���������
       addToCart(query.id, chatId, productId);
     }
   } else if (data.startsWith('flavorpick_')) {
-    // Выбор/снятие вкуса
+    // �����/������ �����
     const pickData = data.replace('flavorpick_', '');
-    // Находим индекс - это всё что после последнего _
+    // ������� ������ - ��� �� ��� ����� ���������� _
     const parts = pickData.split('_');
     const flavorIndex = parseInt(parts[parts.length - 1]);
-    // productId - это всё, кроме последнего элемента
+    // productId - ��� ��, ����� ���������� ��������
     const productId = parts.slice(0, -1).join('_');
     
     const key = `flavors_${chatId}_${productId}`;
@@ -2512,9 +2223,9 @@ bot.on('callback_query', async (query) => {
     
     const idx = userCarts[key].indexOf(flavorIndex);
     if (idx === -1) {
-      userCarts[key].push(flavorIndex); // добавить
+      userCarts[key].push(flavorIndex); // ��������
     } else {
-      userCarts[key].splice(idx, 1); // убрать
+      userCarts[key].splice(idx, 1); // ������
     }
     
     showFlavorSelection(chatId, productId, query.message.message_id, userCarts[key]);
@@ -2527,16 +2238,16 @@ bot.on('callback_query', async (query) => {
     const product = products.find(p => p.id === productId);
 
     if (!product) {
-      bot.answerCallbackQuery(query.id, { text: '❌ Товар не найден' });
+      bot.answerCallbackQuery(query.id, { text: '? ����� �� ������' });
       return;
     }
 
     if (selectedIndexes.length === 0) {
-      bot.answerCallbackQuery(query.id, { text: '⚠️ Выберите хотя бы один вариант!', show_alert: true });
+      bot.answerCallbackQuery(query.id, { text: '?? �������� ���� �� ���� �������!', show_alert: true });
       return;
     }
 
-    // Определяем тип вариантов и получаем список
+    // ���������� ��� ��������� � �������� ������
     let variants = [];
     if (product.flavors) {
       const enabledFlavors = product.flavors.filter(f => {
@@ -2555,7 +2266,7 @@ bot.on('callback_query', async (query) => {
 
     if (!userCarts[chatId]) userCarts[chatId] = [];
 
-    // Добавляем каждый выбранный вариант отдельной позицией
+    // ��������� ������ ��������� ������� ��������� ��������
     selectedIndexes.forEach(i => {
       const variantName = variants[i];
       
@@ -2567,21 +2278,21 @@ bot.on('callback_query', async (query) => {
       }
     });
 
-    // Очищаем временный выбор
+    // ������� ��������� �����
     delete userCarts[key];
 
     bot.answerCallbackQuery(query.id, { 
-      text: `✅ Добавлено в корзину: ${selectedIndexes.length} вариант(ов)!`,
+      text: `? ��������� � �������: ${selectedIndexes.length} �������(��)!`,
       show_alert: false
     });
 
-    // Возвращаемся к карточке товара
+    // ������������ � �������� ������
     showProductDetail(chatId, productId, query.message.message_id);
 
   } else if (data === 'clear_cart') {
     userCarts[chatId] = [];
-    bot.answerCallbackQuery(query.id, { text: '🗑 Корзина очищена' });
-    bot.editMessageText('🛒 Корзина пуста', {
+    bot.answerCallbackQuery(query.id, { text: '?? ������� �������' });
+    bot.editMessageText('?? ������� �����', {
       chat_id: chatId,
       message_id: query.message.message_id
     });
@@ -2592,16 +2303,16 @@ bot.on('callback_query', async (query) => {
     const pointId = data.replace('pickup_', '');
     const point = PICKUP_POINTS.find(p => p.id === pointId);
     if (!point) {
-      bot.answerCallbackQuery(query.id, { text: '❌ Точка не найдена' });
+      bot.answerCallbackQuery(query.id, { text: '? ����� �� �������' });
       return;
     }
-    const firstName = query.from.first_name || 'Клиент';
+    const firstName = query.from.first_name || '������';
     checkout(chatId, userId, username, firstName, point.address);
     bot.answerCallbackQuery(query.id);
   } else if (data.startsWith('complete_')) {
-    // Завершить заказ — выключить купленные вкусы в ассортименте
+    // ��������� ����� � ��������� ��������� ����� � ������������
     if (!isAdmin(userId)) {
-      bot.answerCallbackQuery(query.id, { text: '❌ Доступ запрещен' });
+      bot.answerCallbackQuery(query.id, { text: '? ������ ��������' });
       return;
     }
 
@@ -2610,21 +2321,21 @@ bot.on('callback_query', async (query) => {
     const order = orders.find(o => o.id === orderId);
 
     if (!order) {
-      bot.answerCallbackQuery(query.id, { text: '❌ Заказ не найден', show_alert: true });
+      bot.answerCallbackQuery(query.id, { text: '? ����� �� ������', show_alert: true });
       return;
     }
 
-    // Выключаем вкусы для каждого товара в заказе
+    // ��������� ����� ��� ������� ������ � ������
     const disabledFlavors = [];
     const orderItems = order.items || [];
 
     for (const item of orderItems) {
-      if (!item.flavor) continue; // товар без вкуса — пропускаем
+      if (!item.flavor) continue; // ����� ��� ����� � ����������
 
       const product = products.find(p => p.id === item.productId);
       if (!product || !product.flavors) continue;
 
-      // Ищем вкус по имени
+      // ���� ���� �� �����
       const flavorIndex = product.flavors.findIndex(f => {
         const name = typeof f === 'string' ? f : f.name;
         return name === item.flavor;
@@ -2637,40 +2348,40 @@ bot.on('callback_query', async (query) => {
         } else {
           product.flavors[flavorIndex] = { name: flavor, stock: '', enabled: false };
         }
-        disabledFlavors.push(`${product.name} — ${item.flavor}`);
-        console.log(`✅ Вкус выключен: ${product.name} / ${item.flavor}`);
+        disabledFlavors.push(`${product.name} � ${item.flavor}`);
+        console.log(`? ���� ��������: ${product.name} / ${item.flavor}`);
       }
     }
 
-    // Сохраняем в файл
+    // ��������� � ����
     try {
       const fs = require('fs');
       const path = require('path');
-      const contentJs = '// Категории товаров\nconst categories = ' + JSON.stringify(categories, null, 2) + ';\n\n// Товары\nconst products = ' + JSON.stringify(products, null, 2) + ';\n\nmodule.exports = { products, categories };\n';
+      const contentJs = '// ��������� �������\nconst categories = ' + JSON.stringify(categories, null, 2) + ';\n\n// ������\nconst products = ' + JSON.stringify(products, null, 2) + ';\n\nmodule.exports = { products, categories };\n';
       fs.writeFileSync(path.join(__dirname, '..', 'data', 'products.js'), contentJs, 'utf8');
     } catch(e) { console.error('Save products error:', e.message); }
 
-    // Синхронизируем с Redis
+    // �������������� � Redis
     if (redis) {
       redis.set('products', JSON.stringify({ products, categories }))
-        .then(() => console.log('✅ Redis обновлён после завершения заказа'))
-        .catch(e => console.error('❌ Ошибка Redis:', e.message));
+        .then(() => console.log('? Redis ������� ����� ���������� ������'))
+        .catch(e => console.error('? ������ Redis:', e.message));
     }
 
-    // Обновляем статус заказа
+    // ��������� ������ ������
     order.status = 'completed';
     saveOrder(order);
 
     const disabledText = disabledFlavors.length > 0
-      ? `\n\n🔴 Выключено вкусов: ${disabledFlavors.length}\n${disabledFlavors.map(f => `• ${f}`).join('\n')}`
-      : '\n\n(товары без вкусов — ничего не выключено)';
+      ? `\n\n?? ��������� ������: ${disabledFlavors.length}\n${disabledFlavors.map(f => `� ${f}`).join('\n')}`
+      : '\n\n(������ ��� ������ � ������ �� ���������)';
 
-    bot.answerCallbackQuery(query.id, { text: `🏁 Заказ завершён!${disabledFlavors.length > 0 ? ` Выключено: ${disabledFlavors.length} вкусов` : ''}`, show_alert: true });
+    bot.answerCallbackQuery(query.id, { text: `?? ����� ��������!${disabledFlavors.length > 0 ? ` ���������: ${disabledFlavors.length} ������` : ''}`, show_alert: true });
 
-    // Обновляем сообщение
+    // ��������� ���������
     const originalText = query.message.text || query.message.caption || '';
     bot.editMessageText(
-      `${originalText}\n\n🏁 <b>ЗАКАЗ ЗАВЕРШЁН</b>${disabledText}`,
+      `${originalText}\n\n?? <b>����� �����ب�</b>${disabledText}`,
       {
         chat_id: chatId,
         message_id: query.message.message_id,
@@ -2680,7 +2391,7 @@ bot.on('callback_query', async (query) => {
 
   } else if (data.startsWith('confirm_') || data.startsWith('cancel_')) {
     if (!isAdmin(userId)) {
-      bot.answerCallbackQuery(query.id, { text: '❌ Доступ запрещен' });
+      bot.answerCallbackQuery(query.id, { text: '? ������ ��������' });
       return;
     }
 
@@ -2693,10 +2404,10 @@ bot.on('callback_query', async (query) => {
       order.status = action;
       saveOrder(order);
 
-      const statusText = action === 'confirmed' ? '✅ подтвержден' : '❌ отменен';
-      bot.answerCallbackQuery(query.id, { text: `Заказ ${statusText}` });
+      const statusText = action === 'confirmed' ? '? �����������' : '? �������';
+      bot.answerCallbackQuery(query.id, { text: `����� ${statusText}` });
 
-      // При подтверждении оставляем кнопку "Завершить", при отмене — убираем все кнопки
+      // ��� ������������� ��������� ������ "���������", ��� ������ � ������� ��� ������
       const editOptions = {
         chat_id: chatId,
         message_id: query.message.message_id,
@@ -2706,89 +2417,89 @@ bot.on('callback_query', async (query) => {
       if (action === 'confirmed') {
         editOptions.reply_markup = {
           inline_keyboard: [
-            [{ text: '🏁 Завершить заказ', callback_data: `complete_${orderId}` }],
-            [{ text: '💬 Написать клиенту', callback_data: `contact_${order.userId}` }]
+            [{ text: '?? ��������� �����', callback_data: `complete_${orderId}` }],
+            [{ text: '?? �������� �������', callback_data: `contact_${order.userId}` }]
           ]
         };
       }
 
       bot.editMessageText(
-        `${query.message.text}\n\n*Статус: ${statusText.toUpperCase()}*`,
+        `${query.message.text}\n\n*������: ${statusText.toUpperCase()}*`,
         editOptions
       ).catch(() => {});
 
-      // Уведомить клиента
+      // ��������� �������
       bot.sendMessage(
         order.chatId,
-        `Ваш заказ #${orderId} ${statusText}!`
+        `��� ����� #${orderId} ${statusText}!`
       );
 
-      // Автозапрос отзыва — только при подтверждении, и только если не оставлял в последние 30 дней
+      // ���������� ������ � ������ ��� �������������, � ������ ���� �� �������� � ��������� 30 ����
       if (action === 'confirmed' && !hasRecentReview(order.userId)) {
         setTimeout(() => {
           bot.sendMessage(
             order.chatId,
-            `🎉 Рады, что вы выбрали нас!\n\nПожалуйста, оставьте отзыв о вашем заказе — это займёт меньше минуты и очень поможет нам стать лучше 🙏`,
+            `?? ����, ��� �� ������� ���!\n\n����������, �������� ����� � ����� ������ � ��� ����� ������ ������ � ����� ������� ��� ����� ����� ??`,
             {
               reply_markup: {
                 inline_keyboard: [
                   [
-                    { text: '⭐',     callback_data: 'review_rate_1' },
-                    { text: '⭐⭐',   callback_data: 'review_rate_2' },
-                    { text: '⭐⭐⭐', callback_data: 'review_rate_3' },
+                    { text: '?',     callback_data: 'review_rate_1' },
+                    { text: '??',   callback_data: 'review_rate_2' },
+                    { text: '???', callback_data: 'review_rate_3' },
                   ],
                   [
-                    { text: '⭐⭐⭐⭐',   callback_data: 'review_rate_4' },
-                    { text: '⭐⭐⭐⭐⭐', callback_data: 'review_rate_5' },
+                    { text: '????',   callback_data: 'review_rate_4' },
+                    { text: '?????', callback_data: 'review_rate_5' },
                   ],
                   [
-                    { text: '✖️ Не сейчас', callback_data: 'review_cancel' }
+                    { text: '?? �� ������', callback_data: 'review_cancel' }
                   ]
                 ]
               }
             }
           ).then(() => {
-            // Инициализируем состояние отзыва для этого пользователя
+            // �������������� ��������� ������ ��� ����� ������������
             reviewState[order.userId] = { step: 'rating', orderId };
           }).catch(() => {});
-        }, 5000); // небольшая задержка чтобы сообщение пришло после уведомления о статусе
+        }, 5000); // ��������� �������� ����� ��������� ������ ����� ����������� � �������
       }
     }
   } else if (data.startsWith('contact_')) {
     if (!isAdmin(userId)) {
-      bot.answerCallbackQuery(query.id, { text: '❌ Доступ запрещен' });
+      bot.answerCallbackQuery(query.id, { text: '? ������ ��������' });
       return;
     }
     
     const clientUserId = parseInt(data.replace('contact_', ''));
     
-    // Ищем заказ, чтобы получить chatId клиента
+    // ���� �����, ����� �������� chatId �������
     const orders = getOrders();
     const clientOrder = orders.find(o => o.userId === clientUserId);
     
     if (!clientOrder) {
-      bot.answerCallbackQuery(query.id, { text: '❌ Не удалось найти клиента', show_alert: true });
+      bot.answerCallbackQuery(query.id, { text: '? �� ������� ����� �������', show_alert: true });
       return;
     }
     
-    // Открываем чат с клиентом
-    const clientFirstName = clientOrder.firstName || 'Клиент';
-    const clientUsername = clientOrder.username !== 'Не указан' ? clientOrder.username : '';
+    // ��������� ��� � ��������
+    const clientFirstName = clientOrder.firstName || '������';
+    const clientUsername = clientOrder.username !== '�� ������' ? clientOrder.username : '';
     
     chat.openChat(clientUserId, clientOrder.chatId, clientUsername, clientFirstName);
     chat.setAdminReplyMode(userId, clientUserId);
     
-    bot.answerCallbackQuery(query.id, { text: '💬 Введите сообщение клиенту' });
+    bot.answerCallbackQuery(query.id, { text: '?? ������� ��������� �������' });
     bot.sendMessage(chatId, 
-      `💬 *Режим ответа клиенту активирован*\n\n` +
-      `Клиент: ${clientFirstName}${clientUsername ? ` (@${clientUsername})` : ''}\n` +
+      `?? *����� ������ ������� �����������*\n\n` +
+      `������: ${clientFirstName}${clientUsername ? ` (@${clientUsername})` : ''}\n` +
       `ID: \`${clientUserId}\`\n\n` +
-      `Введите ваше сообщение, и оно будет отправлено клиенту.\n\n` +
-      `Для отмены используйте /cancel`,
+      `������� ���� ���������, � ��� ����� ���������� �������.\n\n` +
+      `��� ������ ����������� /cancel`,
       { parse_mode: 'Markdown' }
     );
 
-  // ─── Отзывы ───────────────────────────────────────────────────────────────
+  // --- ������ ---------------------------------------------------------------
   } else if (data.startsWith('review_page_')) {
     const page = parseInt(data.replace('review_page_', ''), 10);
     const reviews = getReviews();
@@ -2809,7 +2520,7 @@ bot.on('callback_query', async (query) => {
     const hasPurchase = orders.some(o => o.userId === userId && o.status === 'confirmed');
     if (!hasPurchase) {
       bot.answerCallbackQuery(query.id, {
-        text: '❌ Оставить отзыв могут только покупатели с подтверждёнными заказами',
+        text: '? �������� ����� ����� ������ ���������� � �������������� ��������',
         show_alert: true
       });
       return;
@@ -2823,17 +2534,17 @@ bot.on('callback_query', async (query) => {
     reviewState[userId].rating = rating;
     reviewState[userId].step = 'text';
 
-    const stars = '⭐'.repeat(rating);
+    const stars = '?'.repeat(rating);
     bot.editMessageText(
-      `${stars} Оценка ${rating}/5 принята!\n\nТеперь напишите короткий отзыв о вашем опыте:\n_(или нажмите «Пропустить»)_`,
+      `${stars} ������ ${rating}/5 �������!\n\n������ �������� �������� ����� � ����� �����:\n_(��� ������� ������������)_`,
       {
         chat_id: chatId,
         message_id: query.message.message_id,
         parse_mode: 'Markdown',
         reply_markup: {
           inline_keyboard: [[
-            { text: '➡️ Пропустить', callback_data: 'review_skip' },
-            { text: '❌ Отмена',     callback_data: 'review_cancel' }
+            { text: '?? ����������', callback_data: 'review_skip' },
+            { text: '? ������',     callback_data: 'review_cancel' }
           ]]
         }
       }
@@ -2841,19 +2552,19 @@ bot.on('callback_query', async (query) => {
     bot.answerCallbackQuery(query.id);
 
   } else if (data === 'review_skip') {
-    // Пропустить текст — переходим к шагу фото
+    // ���������� ����� � ��������� � ���� ����
     if (!reviewState[userId]) reviewState[userId] = {};
     reviewState[userId].step = 'photo';
 
     bot.editMessageText(
-      `📸 Хотите прикрепить фото к отзыву?\n\nОтправьте картинку или нажмите «Пропустить»`,
+      `?? ������ ���������� ���� � ������?\n\n��������� �������� ��� ������� ������������`,
       {
         chat_id: chatId,
         message_id: query.message.message_id,
         reply_markup: {
           inline_keyboard: [[
-            { text: '➡️ Пропустить', callback_data: 'review_skip_photo' },
-            { text: '❌ Отмена',     callback_data: 'review_cancel' }
+            { text: '?? ����������', callback_data: 'review_skip_photo' },
+            { text: '? ������',     callback_data: 'review_cancel' }
           ]]
         }
       }
@@ -2861,10 +2572,10 @@ bot.on('callback_query', async (query) => {
     bot.answerCallbackQuery(query.id);
 
   } else if (data === 'review_skip_photo') {
-    // Сохраняем отзыв без фото
+    // ��������� ����� ��� ����
     if (reviewState[userId] && reviewState[userId].rating) {
       const state = reviewState[userId];
-      const firstName = query.from.first_name || 'Покупатель';
+      const firstName = query.from.first_name || '����������';
       const reviewId = `r${Date.now()}`;
       saveReview({
         id: reviewId,
@@ -2880,20 +2591,20 @@ bot.on('callback_query', async (query) => {
       delete reviewState[userId];
 
       bot.editMessageText(
-        `✅ Спасибо за отзыв, ${firstName}! 🙏`,
+        `? ������� �� �����, ${firstName}! ??`,
         { chat_id: chatId, message_id: query.message.message_id }
       );
 
-      // Уведомляем админов
-      const stars = '⭐'.repeat(state.rating);
+      // ���������� �������
+      const stars = '?'.repeat(state.rating);
       const notifText =
-        `${stars} *Новый отзыв от ${firstName}*${query.from.username ? ` (@${query.from.username})` : ''}` +
-        (state.text ? `\n\n_${state.text}_` : '\n_(без текста)_');
+        `${stars} *����� ����� �� ${firstName}*${query.from.username ? ` (@${query.from.username})` : ''}` +
+        (state.text ? `\n\n_${state.text}_` : '\n_(��� ������)_');
       adminIds.forEach(id => {
         bot.sendMessage(id, notifText, {
           parse_mode: 'Markdown',
           reply_markup: {
-            inline_keyboard: [[{ text: '🗑 Удалить', callback_data: `review_delete_${reviewId}` }]]
+            inline_keyboard: [[{ text: '?? �������', callback_data: `review_delete_${reviewId}` }]]
           }
         }).catch(() => {});
       });
@@ -2902,7 +2613,7 @@ bot.on('callback_query', async (query) => {
 
   } else if (data === 'review_cancel') {
     delete reviewState[userId];
-    bot.editMessageText('❌ Отзыв отменён', {
+    bot.editMessageText('? ����� �������', {
       chat_id: chatId,
       message_id: query.message.message_id
     });
@@ -2910,113 +2621,113 @@ bot.on('callback_query', async (query) => {
 
   } else if (data.startsWith('review_delete_')) {
     if (!isAdmin(userId)) {
-      bot.answerCallbackQuery(query.id, { text: '❌ Доступ запрещён' });
+      bot.answerCallbackQuery(query.id, { text: '? ������ ��������' });
       return;
     }
     const reviewId = data.replace('review_delete_', '');
     const deleted = deleteReview(reviewId);
-    bot.answerCallbackQuery(query.id, { text: deleted ? '🗑 Отзыв удалён' : '❌ Отзыв не найден', show_alert: true });
+    bot.answerCallbackQuery(query.id, { text: deleted ? '?? ����� �����' : '? ����� �� ������', show_alert: true });
     if (deleted) {
       bot.editMessageText(
-        `🗑 _Отзыв удалён_`,
+        `?? _����� �����_`,
         { chat_id: chatId, message_id: query.message.message_id, parse_mode: 'Markdown' }
       ).catch(() => {});
     }
 
   } else if (data.startsWith('review_photo_')) {
     if (!isAdmin(userId)) {
-      bot.answerCallbackQuery(query.id, { text: '❌ Доступ запрещён' });
+      bot.answerCallbackQuery(query.id, { text: '? ������ ��������' });
       return;
     }
     const reviewId = data.replace('review_photo_', '');
     const reviews = getReviews();
     const review = reviews.find(r => r.id === reviewId);
     if (review && review.photoFileId) {
-      const stars = '⭐'.repeat(review.rating);
-      const name = review.username ? `@${review.username}` : (review.firstName || 'Покупатель');
+      const stars = '?'.repeat(review.rating);
+      const name = review.username ? `@${review.username}` : (review.firstName || '����������');
       bot.sendPhoto(chatId, review.photoFileId, {
         caption: `${stars} *${name}*${review.text ? `\n_${review.text}_` : ''}`,
         parse_mode: 'Markdown'
       });
       bot.answerCallbackQuery(query.id);
     } else {
-      bot.answerCallbackQuery(query.id, { text: '❌ Фото не найдено', show_alert: true });
+      bot.answerCallbackQuery(query.id, { text: '? ���� �� �������', show_alert: true });
     }
   }
 });
 
-// ─── Обработка заказов из Mini App ──────────────────────────────────────────
+// --- ��������� ������� �� Mini App ------------------------------------------
 bot.on('message', (msg) => {
   if (!msg.web_app_data) return;
 
   const chatId = msg.chat.id;
   const userId = msg.from.id;
   const username = msg.from.username;
-  const firstName = msg.from.first_name || 'Клиент';
+  const firstName = msg.from.first_name || '������';
 
   let orderData;
   try {
     orderData = JSON.parse(msg.web_app_data.data);
   } catch (e) {
-    bot.sendMessage(chatId, '❌ Ошибка обработки заказа');
+    bot.sendMessage(chatId, '? ������ ��������� ������');
     return;
   }
 
   const { orderId, username: orderUsername, items, total, pickupPoint } = orderData;
 
-  // Сохраняем заказ
+  // ��������� �����
   const order = {
     id: orderId,
     userId,
-    username: orderUsername || username || 'Не указан',
+    username: orderUsername || username || '�� ������',
     firstName: firstName,
     chatId,
     items,
     total,
-    pickupPoint: pickupPoint || 'Не указана',
+    pickupPoint: pickupPoint || '�� �������',
     date: new Date().toISOString(),
     status: 'pending',
     source: 'miniapp'
   };
   saveOrder(order);
 
-  // Подтверждение клиенту
-  let confirmText = `✅ Заказ принят!\n\nНомер заказа: *#${orderId}*\n\n`;
+  // ������������� �������
+  let confirmText = `? ����� ������!\n\n����� ������: *#${orderId}*\n\n`;
   items.forEach((item, i) => {
     confirmText += `${i + 1}. ${item.name}`;
-    if (item.flavor) confirmText += ` — ${item.flavor}`;
-    confirmText += `\n   ${item.qty} × ${formatPrice(item.price)} = ${formatPrice(item.price * item.qty)}\n`;
+    if (item.flavor) confirmText += ` � ${item.flavor}`;
+    confirmText += `\n   ${item.qty} ? ${formatPrice(item.price)} = ${formatPrice(item.price * item.qty)}\n`;
   });
-  confirmText += `\n💰 *Итого: ${formatPrice(total)}*\n`;
-  if (pickupPoint) confirmText += `🏪 *Точка самовывоза:* ${pickupPoint}\n`;
+  confirmText += `\n?? *�����: ${formatPrice(total)}*\n`;
+  if (pickupPoint) confirmText += `?? *����� ����������:* ${pickupPoint}\n`;
   confirmText += `\n`;
-  if (orderUsername) confirmText += `👤 Username: ${orderUsername}\n`;
-  confirmText += `💵 Оплата при получении наличными, при оплате переводом согласовывать с менеджером\nМенеджер свяжется с вами!`;
+  if (orderUsername) confirmText += `?? Username: ${orderUsername}\n`;
+  confirmText += `?? ������ ��� ��������� ���������, ��� ������ ��������� ������������� � ����������\n�������� �������� � ����!`;
 
   bot.sendMessage(chatId, confirmText, { parse_mode: 'Markdown' });
 
-  // Уведомление администраторам
-  let adminText = `📱 *Новый заказ из Mini App!*\n\n`;
-  adminText += `🆔 Заказ: #${orderId}\n`;
+  // ����������� ���������������
+  let adminText = `?? *����� ����� �� Mini App!*\n\n`;
+  adminText += `?? �����: #${orderId}\n`;
   
-  // Формируем информацию о клиенте
-  adminText += `👤 Клиент: ${firstName}`;
+  // ��������� ���������� � �������
+  adminText += `?? ������: ${firstName}`;
   if (username) {
     adminText += ` (@${username})`;
   }
-  adminText += `\n📝 ID: \`${userId}\`\n`;
+  adminText += `\n?? ID: \`${userId}\`\n`;
   
-  if (orderUsername && orderUsername !== '@' + username) adminText += `📝 Указал username: ${orderUsername}\n`;
-  if (pickupPoint) adminText += `🏪 Точка самовывоза: ${pickupPoint}\n`;
+  if (orderUsername && orderUsername !== '@' + username) adminText += `?? ������ username: ${orderUsername}\n`;
+  if (pickupPoint) adminText += `?? ����� ����������: ${pickupPoint}\n`;
   adminText += `\n`;
 
   items.forEach((item, i) => {
     adminText += `${i + 1}. ${item.name}`;
     if (item.flavor) adminText += ` (${item.flavor})`;
-    adminText += ` × ${item.qty} = ${formatPrice(item.price * item.qty)}\n`;
+    adminText += ` ? ${item.qty} = ${formatPrice(item.price * item.qty)}\n`;
   });
 
-  adminText += `\n💰 *Итого: ${formatPrice(total)}*`;
+  adminText += `\n?? *�����: ${formatPrice(total)}*`;
 
   adminIds.forEach(id => {
     bot.sendMessage(id, adminText, {
@@ -3024,19 +2735,19 @@ bot.on('message', (msg) => {
       reply_markup: {
         inline_keyboard: [
           [
-            { text: '✅ Подтвердить', callback_data: `confirm_${orderId}` },
-            { text: '❌ Отменить',    callback_data: `cancel_${orderId}` }
+            { text: '? �����������', callback_data: `confirm_${orderId}` },
+            { text: '? ��������',    callback_data: `cancel_${orderId}` }
           ],
           [
-            { text: '🏁 Завершить заказ', callback_data: `complete_${orderId}` }
+            { text: '?? ��������� �����', callback_data: `complete_${orderId}` }
           ],
           [
-            { text: '💬 Написать клиенту', callback_data: `contact_${userId}` }
+            { text: '?? �������� �������', callback_data: `contact_${userId}` }
           ]
         ]
       }
-    }).catch(err => console.log(`❌ Не удалось уведомить админа ${id}:`, err.message));
+    }).catch(err => console.log(`? �� ������� ��������� ������ ${id}:`, err.message));
   });
 });
 
-console.log('🤖 Бот запущен!');
+console.log('?? ��� �������!');

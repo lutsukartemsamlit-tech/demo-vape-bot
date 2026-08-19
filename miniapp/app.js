@@ -88,6 +88,71 @@ let adminCurrentProductId = null;
 const API_BASE = '';
 console.log('API Base URL: relative (Vercel)');
 
+// ─── Auto-refresh configuration ──────────────────────────────────────────────
+let autoRefreshTimer = null;
+const AUTO_REFRESH_INTERVAL = 30000; // 30 секунд
+
+// Функция автообновления товаров
+async function autoRefreshProducts() {
+  try {
+    const timestamp = Date.now();
+    const apiResponse = await fetch(`/api/products?t=${timestamp}`, { 
+      cache: 'no-cache',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
+    
+    if (apiResponse.ok) {
+      const apiData = await apiResponse.json();
+      if (apiData.success && apiData.products && apiData.products.length > 0) {
+        const oldProducts = products;
+        products = apiData.products;
+        console.log('🔄 Товары обновлены автоматически:', products.length);
+        
+        // Если открыта детальная страница товара - обновляем её
+        if (currentProductId) {
+          const currentProduct = products.find(p => p.id === currentProductId);
+          const oldProduct = oldProducts.find(p => p.id === currentProductId);
+          
+          // Проверяем изменились ли вкусы
+          if (currentProduct && oldProduct) {
+            const oldFlavorsCount = oldProduct.flavors ? oldProduct.flavors.length : 0;
+            const newFlavorsCount = currentProduct.flavors ? currentProduct.flavors.length : 0;
+            
+            if (oldFlavorsCount !== newFlavorsCount) {
+              console.log('🔄 Обнаружены изменения вкусов, обновляем страницу товара');
+              showDetail(currentProductId);
+            }
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error('❌ Ошибка автообновления:', error);
+  }
+}
+
+// Запуск автообновления
+function startAutoRefresh() {
+  if (autoRefreshTimer) {
+    clearInterval(autoRefreshTimer);
+  }
+  autoRefreshTimer = setInterval(autoRefreshProducts, AUTO_REFRESH_INTERVAL);
+  console.log('✅ Автообновление запущено (каждые 30 секунд)');
+}
+
+// Остановка автообновления
+function stopAutoRefresh() {
+  if (autoRefreshTimer) {
+    clearInterval(autoRefreshTimer);
+    autoRefreshTimer = null;
+    console.log('⏹ Автообновление остановлено');
+  }
+}
+
 // ─── Product Data State ──────────────────────────────────────────────────────
 let categories = [];
 let products = [];
@@ -784,14 +849,32 @@ async function fetchProducts() {
   // Сначала загружаем из API (Redis) — там актуальные данные с изменениями
   try {
     console.log('Trying /api/products (Redis)');
-    const apiResponse = await fetch('/api/products', { cache: 'no-cache' });
+    // Добавляем timestamp чтобы обойти кэш Telegram WebApp
+    const timestamp = Date.now();
+    const apiResponse = await fetch(`/api/products?t=${timestamp}`, { 
+      cache: 'no-cache',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
     
     if (apiResponse.ok) {
       const apiData = await apiResponse.json();
-      if (apiData.success && apiData.products && apiData.products.length > 0) {
-        categories = apiData.categories || FALLBACK_CATEGORIES;
+      // Проверяем наличие products (success может быть true или undefined)
+      if (apiData.products && Array.isArray(apiData.products) && apiData.products.length > 0) {
+        // ВАЖНО: всегда используем fallback для категорий если их нет
+        if (apiData.categories && Array.isArray(apiData.categories) && apiData.categories.length > 0) {
+          categories = apiData.categories;
+        } else {
+          categories = FALLBACK_CATEGORIES;
+          console.log('⚠️ Категории не найдены в API, используется fallback');
+        }
         products = apiData.products;
         console.log('✅ Loaded from Redis API:', products.length, 'products');
+        console.log('📂 Categories:', categories.length);
+        console.log('Источник данных:', apiData.source || 'unknown');
         hideLoadingIndicator();
         return true;
       }
@@ -861,6 +944,8 @@ function hideLoadingIndicator() {
   if (loaded) {
     showHome();
     updateCartBadge();
+    // Запускаем автообновление товаров
+    startAutoRefresh();
   } else {
     showScreen('screen-home');
     const grid = document.getElementById('categories-grid');
@@ -960,6 +1045,157 @@ function showAdminMain() {
   }
   
   grid.innerHTML = '';
+  
+  // Добавляем кнопку обновления данных
+  const refreshCard = document.createElement('div');
+  refreshCard.className = 'cat-card';
+  refreshCard.style.background = 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)';
+  refreshCard.innerHTML = `
+    <div class="cat-icon">🔄</div>
+    <div class="cat-name">Обновить</div>
+    <div class="cat-count">Синхронизация с Redis</div>
+  `;
+  refreshCard.onclick = async () => {
+    // Предотвращаем повторные клики
+    if (refreshCard.dataset.loading === 'true') {
+      console.log('⏳ Уже обновляется...');
+      return;
+    }
+    
+    refreshCard.dataset.loading = 'true';
+    refreshCard.style.opacity = '0.6';
+    refreshCard.style.pointerEvents = 'none';
+    const icon = refreshCard.querySelector('.cat-icon');
+    icon.style.animation = 'spin 1s linear infinite';
+    
+    showToast('🔄 Обновление данных...', '#3498db');
+    
+    try {
+      const timestamp = Date.now();
+      const apiResponse = await fetch(`/api/products?t=${timestamp}`, { 
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
+      
+      if (apiResponse.ok) {
+        const apiData = await apiResponse.json();
+        console.log('📦 Получен ответ от API:', apiData);
+        
+        // Проверяем наличие products (success может быть true или undefined)
+        if (apiData.products && Array.isArray(apiData.products) && apiData.products.length > 0) {
+          const oldProductsCount = products.length;
+          const oldCategoriesCount = categories.length;
+          
+          // ВАЖНО: всегда используем fallback для категорий если их нет
+          if (apiData.categories && Array.isArray(apiData.categories) && apiData.categories.length > 0) {
+            categories = apiData.categories;
+            console.log('✅ Категории загружены из API:', categories.length);
+          } else {
+            categories = FALLBACK_CATEGORIES;
+            console.log('⚠️ Категории не найдены в API, используется fallback:', categories.length);
+          }
+          
+          products = apiData.products;
+          
+          console.log('✅ Обновлено из Redis:', products.length, 'товаров');
+          console.log('📂 Категорий:', categories.length);
+          console.log('Источник данных:', apiData.source || 'unknown');
+          console.log('Было товаров:', oldProductsCount, '→ Стало:', products.length);
+          console.log('Было категорий:', oldCategoriesCount, '→ Стало:', categories.length);
+          
+          // Проверяем первый товар для отладки
+          if (products.length > 0) {
+            console.log('Пример первого товара:', {
+              id: products[0].id,
+              name: products[0].name,
+              categoryId: products[0].categoryId,
+              enabled: products[0].enabled
+            });
+          }
+          
+          // Показываем детальную информацию
+          showToast(`✅ Товаров: ${products.length}, Категорий: ${categories.length}`, '#22c55e');
+          
+          // Перерисовываем админ-панель - НЕ вызываем showAdminMain рекурсивно
+          // Просто обновляем категории на месте
+          console.log('🔄 Обновление карточек категорий...');
+          
+          // Удаляем ВСЕ карточки кроме кнопки обновления и диагностики
+          const allCards = Array.from(grid.children);
+          console.log('Всего карточек перед удалением:', allCards.length);
+          
+          // Считаем сколько категорий реально есть товаров
+          let categoriesWithProducts = 0;
+          categories.forEach(cat => {
+            const count = products.filter(p => p.categoryId === cat.id && !p.parentId && p.enabled !== false).length;
+            if (count > 0) categoriesWithProducts++;
+          });
+          
+          console.log('Категорий с товарами:', categoriesWithProducts);
+          
+          allCards.forEach((card, idx) => {
+            const icon = card.querySelector('.cat-icon')?.textContent;
+            console.log(`Карточка ${idx}:`, icon);
+            
+            // Удаляем все кроме кнопок "Обновить" (🔄) и "Диагностика" (🔍)
+            if (icon !== '🔄' && icon !== '🔍') {
+              console.log('Удаляем карточку:', icon);
+              card.remove();
+            }
+          });
+          
+          // Добавляем обновлённые категории
+          console.log('Добавляем категории:', categories.length);
+          
+          if (categories.length === 0) {
+            showToast('⚠️ Нет категорий для отображения', '#e67e22');
+          }
+          
+          categories.forEach((cat, index) => {
+            const count = products.filter(p => p.categoryId === cat.id && !p.parentId && p.enabled !== false).length;
+            console.log(`Категория ${index + 1}: ${cat.name} (${cat.icon}) - ${count} товаров`);
+            
+            const card = document.createElement('div');
+            card.className = 'cat-card';
+            card.innerHTML = `
+              <div class="cat-icon">${cat.icon}</div>
+              <div class="cat-name">${cat.name}</div>
+              <div class="cat-count">${count} товаров</div>
+            `;
+            card.onclick = () => showAdminCategory(cat.id);
+            grid.appendChild(card);
+          });
+          
+          console.log('✅ Категории обновлены. Всего карточек:', grid.children.length);
+          
+          // Показываем ещё один toast с результатом
+          setTimeout(() => {
+            showToast(`📦 Добавлено ${categories.length} категорий`, '#3498db');
+          }, 2000);
+        } else {
+          console.error('❌ Неверный формат данных:', apiData);
+          throw new Error('Нет товаров в ответе API');
+        }
+      } else {
+        const errorText = await apiResponse.text();
+        console.error('❌ Ошибка HTTP:', apiResponse.status, errorText);
+        throw new Error(`HTTP ${apiResponse.status}: ${errorText.substring(0, 100)}`);
+      }
+    } catch (error) {
+      console.error('❌ Ошибка обновления:', error);
+      showToast(`❌ ${error.message}`, '#e74c3c');
+    } finally {
+      refreshCard.dataset.loading = 'false';
+      refreshCard.style.opacity = '1';
+      refreshCard.style.pointerEvents = 'auto';
+      icon.style.animation = '';
+    }
+  };
+  grid.appendChild(refreshCard);
   
   // Добавляем карточку с диагностикой
   const debugCard = document.createElement('div');
@@ -1079,6 +1315,21 @@ function showAdminCategory(catId) {
       };
       list.appendChild(card);
     });
+
+  // Кнопка "Добавить товар"
+  const addCard = document.createElement('div');
+  addCard.className = 'product-card';
+  addCard.style.background = 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)';
+  addCard.style.cursor = 'pointer';
+  addCard.innerHTML = `
+    <div class="product-thumb">➕</div>
+    <div class="product-info">
+      <div class="product-name">Добавить новый товар</div>
+      <div class="product-desc">Создать ${cat.name.toLowerCase()}</div>
+    </div>
+  `;
+  addCard.onclick = () => showAddProductForm(catId);
+  list.appendChild(addCard);
 }
 
 function showAdminSubProducts(parentId) {
@@ -1193,6 +1444,29 @@ function showAdminFlavors(productId) {
   title.style.padding = '20px';
   content.appendChild(title);
   
+  // Кнопка добавления вкуса
+  const addBtn = document.createElement('button');
+  addBtn.className = 'add-flavor-btn';
+  addBtn.style.cssText = `
+    margin: 0 20px 20px 20px;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    width: calc(100% - 40px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    transition: all 0.3s ease;
+  `;
+  addBtn.textContent = '➕ Добавить вкус';
+  addBtn.onclick = () => showAddFlavorDialog(productId);
+  addBtn.onmouseover = function() { this.style.transform = 'translateY(-2px)'; this.style.boxShadow = '0 6px 16px rgba(102, 126, 234, 0.4)'; };
+  addBtn.onmouseout = function() { this.style.transform = 'translateY(0)'; this.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.3)'; };
+  content.appendChild(addBtn);
+  
   const grid = document.createElement('div');
   grid.className = 'flavors-grid';
   grid.style.padding = '0 20px 20px 20px';
@@ -1204,16 +1478,340 @@ function showAdminFlavors(productId) {
     const chip = document.createElement('div');
     chip.className = 'flavor-chip';
     if (isEnabled) chip.classList.add('selected');
+    chip.style.position = 'relative';
     chip.textContent = `${isEnabled ? '✅' : '❌'} ${flavorName}`;
     chip.onclick = () => toggleFlavorAdmin(productId, index, !isEnabled);
+    
+    // Долгое нажатие для удаления
+    let pressTimer;
+    chip.onmousedown = chip.ontouchstart = (e) => {
+      pressTimer = setTimeout(() => {
+        e.preventDefault();
+        showDeleteFlavorDialog(productId, index, flavorName);
+      }, 800); // 800ms долгое нажатие
+    };
+    chip.onmouseup = chip.onmouseleave = chip.ontouchend = chip.ontouchcancel = () => {
+      clearTimeout(pressTimer);
+    };
+    
     grid.appendChild(chip);
   });
   
   content.appendChild(grid);
 }
 
+// Показать диалог добавления вкуса
+function showAddFlavorDialog(productId) {
+  const dialog = document.createElement('div');
+  dialog.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 20px;
+  `;
+  
+  const box = document.createElement('div');
+  box.style.cssText = `
+    background: #1a1a2e;
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  `;
+  
+  const title = document.createElement('div');
+  title.textContent = 'Добавить новые вкусы';
+  title.style.cssText = `
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 16px;
+  `;
+  box.appendChild(title);
+  
+  const info = document.createElement('div');
+  info.textContent = 'Введите вкусы через запятую:';
+  info.style.cssText = `
+    font-size: 14px;
+    color: #aaa;
+    margin-bottom: 12px;
+  `;
+  box.appendChild(info);
+  
+  const input = document.createElement('textarea');
+  input.placeholder = 'Например: Манго лед, Клубника, Дыня';
+  input.style.cssText = `
+    width: 100%;
+    min-height: 80px;
+    padding: 12px;
+    background: #16213e;
+    border: 1px solid #0f3460;
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+    resize: vertical;
+    margin-bottom: 16px;
+    font-family: inherit;
+  `;
+  box.appendChild(input);
+  
+  const buttons = document.createElement('div');
+  buttons.style.cssText = `
+    display: flex;
+    gap: 12px;
+  `;
+  
+  const cancelBtn = document.createElement('button');
+  cancelBtn.textContent = 'Отмена';
+  cancelBtn.style.cssText = `
+    flex: 1;
+    padding: 12px;
+    background: #333;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  `;
+  cancelBtn.onclick = () => dialog.remove();
+  buttons.appendChild(cancelBtn);
+  
+  const saveBtn = document.createElement('button');
+  saveBtn.textContent = 'Добавить';
+  saveBtn.style.cssText = `
+    flex: 1;
+    padding: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  `;
+  saveBtn.onclick = async () => {
+    const flavorsText = input.value.trim();
+    if (!flavorsText) {
+      showToast('❌ Введите хотя бы один вкус', '#e74c3c');
+      return;
+    }
+    
+    const newFlavors = flavorsText.split(',').map(f => f.trim()).filter(f => f.length > 0);
+    if (newFlavors.length === 0) {
+      showToast('❌ Введите хотя бы один вкус', '#e74c3c');
+      return;
+    }
+    
+    dialog.remove();
+    await addFlavorsToProduct(productId, newFlavors);
+  };
+  buttons.appendChild(saveBtn);
+  
+  box.appendChild(buttons);
+  dialog.appendChild(box);
+  document.body.appendChild(dialog);
+  
+  input.focus();
+}
+
+// Показать диалог удаления вкуса
+function showDeleteFlavorDialog(productId, flavorIndex, flavorName) {
+  const dialog = document.createElement('div');
+  dialog.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 20px;
+  `;
+  
+  const box = document.createElement('div');
+  box.style.cssText = `
+    background: #1a1a2e;
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  `;
+  
+  const title = document.createElement('div');
+  title.textContent = '🗑️ Удалить вкус?';
+  title.style.cssText = `
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 16px;
+  `;
+  box.appendChild(title);
+  
+  const info = document.createElement('div');
+  info.textContent = `Вы уверены что хотите удалить "${flavorName}"?`;
+  info.style.cssText = `
+    font-size: 14px;
+    color: #aaa;
+    margin-bottom: 16px;
+  `;
+  box.appendChild(info);
+  
+  const buttons = document.createElement('div');
+  buttons.style.cssText = `
+    display: flex;
+    gap: 12px;
+  `;
+  
+  const cancelBtn = document.createElement('button');
+  cancelBtn.textContent = 'Отмена';
+  cancelBtn.style.cssText = `
+    flex: 1;
+    padding: 12px;
+    background: #333;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  `;
+  cancelBtn.onclick = () => dialog.remove();
+  buttons.appendChild(cancelBtn);
+  
+  const deleteBtn = document.createElement('button');
+  deleteBtn.textContent = 'Удалить';
+  deleteBtn.style.cssText = `
+    flex: 1;
+    padding: 12px;
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  `;
+  deleteBtn.onclick = async () => {
+    dialog.remove();
+    await deleteFlavorFromProduct(productId, flavorIndex, flavorName);
+  };
+  buttons.appendChild(deleteBtn);
+  
+  box.appendChild(buttons);
+  dialog.appendChild(box);
+  document.body.appendChild(dialog);
+}
+
+// Удалить вкус из товара
+async function deleteFlavorFromProduct(productId, flavorIndex, flavorName) {
+  try {
+    showToast('⏳ Удаление вкуса...', '#3498db');
+    
+    const response = await fetch(`${API_BASE}/api/admin/delete-flavor`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productId, flavorIndex })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      showToast(`✅ Вкус "${flavorName}" удалён`, '#27ae60');
+      
+      // Обновляем локальные данные
+      try {
+        const timestamp = Date.now();
+        const refreshResponse = await fetch(`${API_BASE}/api/products?t=${timestamp}`, { 
+          cache: 'no-cache',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate'
+          }
+        });
+        if (refreshResponse.ok) {
+          const refreshData = await refreshResponse.json();
+          if (refreshData.success && refreshData.products) {
+            products = refreshData.products;
+          }
+        }
+      } catch (e) { console.error('Refresh error:', e); }
+      showAdminFlavors(productId);
+    } else {
+      showToast(`❌ ${data.error}`, '#e74c3c');
+    }
+  } catch (error) {
+    console.error('Delete flavor error:', error);
+    showToast('❌ Ошибка удаления вкуса', '#e74c3c');
+  }
+}
+
+// Добавить вкусы к товару
+async function addFlavorsToProduct(productId, newFlavors) {
+  try {
+    showToast('⏳ Добавление вкусов...', '#3498db');
+    
+    const response = await fetch(`${API_BASE}/api/admin/add-flavors`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productId, flavors: newFlavors })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      showToast(`✅ Добавлено вкусов: ${newFlavors.length}`, '#27ae60');
+      
+      // Обновляем локальные данные
+      try {
+        const timestamp = Date.now();
+        const refreshResponse = await fetch(`${API_BASE}/api/products?t=${timestamp}`, { 
+          cache: 'no-cache',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate'
+          }
+        });
+        if (refreshResponse.ok) {
+          const refreshData = await refreshResponse.json();
+          if (refreshData.success && refreshData.products) {
+            products = refreshData.products;
+          }
+        }
+      } catch (e) { console.error('Refresh error:', e); }
+      showAdminFlavors(productId);
+    } else {
+      showToast(`❌ ${data.error}`, '#e74c3c');
+    }
+  } catch (error) {
+    console.error('Add flavors error:', error);
+    showToast('❌ Ошибка добавления вкусов', '#e74c3c');
+  }
+}
+
 async function toggleFlavorAdmin(productId, flavorIndex, enabled) {
   try {
+    if (!products || products.length === 0) {
+      showToast('❌ Товары не загружены', '#e74c3c');
+      return;
+    }
+    
+    const product = products.find(p => p.id === productId);
+    if (!product) {
+      showToast('❌ Товар не найден', '#e74c3c');
+      return;
+    }
+    
     const response = await fetch(`${API_BASE}/api/admin/update-product`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1232,8 +1830,12 @@ async function toggleFlavorAdmin(productId, flavorIndex, enabled) {
       
       // Обновляем локальные данные из Redis через API
       try {
-        const refreshResponse = await fetch(`${API_BASE}/api/products`, {
-          cache: 'no-cache'
+        const timestamp = Date.now();
+        const refreshResponse = await fetch(`${API_BASE}/api/products?t=${timestamp}`, {
+          cache: 'no-cache',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate'
+          }
         });
         if (refreshResponse.ok) {
           const refreshData = await refreshResponse.json();
@@ -1279,7 +1881,13 @@ async function toggleColorAdmin(productId, colorIndex, enabled) {
     if (data.success) {
       showToast(`${enabled ? '✅ Включено' : '❌ Выключено'}`);
       try {
-        const refreshResponse = await fetch(`${API_BASE}/api/products`, { cache: 'no-cache' });
+        const timestamp = Date.now();
+        const refreshResponse = await fetch(`${API_BASE}/api/products?t=${timestamp}`, { 
+          cache: 'no-cache',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate'
+          }
+        });
         if (refreshResponse.ok) {
           const refreshData = await refreshResponse.json();
           if (refreshData.success && refreshData.products) {
@@ -1316,7 +1924,13 @@ async function toggleProductAdmin(productId, enabled) {
       showToast(enabled ? '✅ Товар включён' : '❌ Товар выключен', enabled ? '#27ae60' : '#e74c3c');
       // Обновляем локальные данные
       try {
-        const refreshResponse = await fetch(`${API_BASE}/api/products`, { cache: 'no-cache' });
+        const timestamp = Date.now();
+        const refreshResponse = await fetch(`${API_BASE}/api/products?t=${timestamp}`, { 
+          cache: 'no-cache',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate'
+          }
+        });
         if (refreshResponse.ok) {
           const refreshData = await refreshResponse.json();
           if (refreshData.success && refreshData.products) {
@@ -1342,4 +1956,163 @@ function goBackAdmin() {
   } else {
     showAdminCategory(adminCurrentCategoryId);
   }
+}
+
+
+// Показать форму добавления нового товара
+function showAddProductForm(categoryId) {
+  const cat = categories.find(c => c.id === categoryId);
+  
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(10, 14, 39, 0.95);
+    backdrop-filter: blur(10px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow-y: auto;
+  `;
+
+  const form = document.createElement('div');
+  form.style.cssText = `
+    background: linear-gradient(135deg, rgba(30, 35, 60, 0.95) 0%, rgba(20, 25, 50, 0.95) 100%);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    border-radius: 20px;
+    padding: 24px;
+    max-width: 500px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  `;
+
+  form.innerHTML = `
+    <h2 style="margin: 0 0 20px 0; color: #fff; font-size: 20px;">
+      ➕ Добавить ${cat.name.toLowerCase()}
+    </h2>
+    
+    <div style="margin-bottom: 16px;">
+      <label style="display: block; margin-bottom: 6px; color: #8f9bba; font-size: 13px; font-weight: 600;">
+        Название товара *
+      </label>
+      <input type="text" id="add-product-name" placeholder="Например: Vaporesso XROS 7" 
+        style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 15px; outline: none;" />
+    </div>
+
+    <div style="margin-bottom: 16px;">
+      <label style="display: block; margin-bottom: 6px; color: #8f9bba; font-size: 13px; font-weight: 600;">
+        Описание
+      </label>
+      <textarea id="add-product-desc" placeholder="Характеристики товара" rows="3"
+        style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 15px; outline: none; resize: vertical;"></textarea>
+    </div>
+
+    <div style="margin-bottom: 16px;">
+      <label style="display: block; margin-bottom: 6px; color: #8f9bba; font-size: 13px; font-weight: 600;">
+        Цена (₽) *
+      </label>
+      <input type="number" id="add-product-price" placeholder="1500" 
+        style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 15px; outline: none;" />
+    </div>
+
+    <div style="margin-bottom: 16px;">
+      <label style="display: block; margin-bottom: 6px; color: #8f9bba; font-size: 13px; font-weight: 600;">
+        Тип вариантов
+      </label>
+      <select id="add-product-variant-type" 
+        style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 15px; outline: none;">
+        <option value="colors">🎨 Цвета (для подов)</option>
+        <option value="flavors">💧 Вкусы (для одноразок/жидкостей)</option>
+        <option value="none">Без вариантов</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom: 16px;">
+      <label style="display: block; margin-bottom: 6px; color: #8f9bba; font-size: 13px; font-weight: 600;">
+        Варианты (цвета/вкусы) — каждый с новой строки
+      </label>
+      <textarea id="add-product-variants" placeholder="Black&#10;White&#10;Blue" rows="4"
+        style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 15px; outline: none; resize: vertical;"></textarea>
+    </div>
+
+    <div style="display: flex; gap: 12px;">
+      <button id="add-product-cancel" 
+        style="flex: 1; padding: 14px; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; color: #ef4444; font-size: 15px; font-weight: 600; cursor: pointer;">
+        Отмена
+      </button>
+      <button id="add-product-submit" 
+        style="flex: 1; padding: 14px; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); border: none; border-radius: 12px; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);">
+        ➕ Добавить
+      </button>
+    </div>
+  `;
+
+  overlay.appendChild(form);
+  document.body.appendChild(overlay);
+
+  // Обработчики
+  document.getElementById('add-product-cancel').onclick = () => overlay.remove();
+  
+  document.getElementById('add-product-submit').onclick = async () => {
+    const name = document.getElementById('add-product-name').value.trim();
+    const description = document.getElementById('add-product-desc').value.trim();
+    const price = Number(document.getElementById('add-product-price').value);
+    const variantType = document.getElementById('add-product-variant-type').value;
+    const variantsText = document.getElementById('add-product-variants').value;
+
+    if (!name) {
+      showToast('⚠️ Введите название товара', '#e67e22');
+      return;
+    }
+    if (!price || price <= 0) {
+      showToast('⚠️ Укажите корректную цену', '#e67e22');
+      return;
+    }
+
+    const variants = variantsText
+      .split('\n')
+      .map(v => v.trim())
+      .filter(v => v.length > 0);
+
+    const submitBtn = document.getElementById('add-product-submit');
+    submitBtn.disabled = true;
+    submitBtn.textContent = '⏳ Добавление...';
+
+    try {
+      const response = await fetch(`${API_BASE}/api/admin/add-product`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          description,
+          price,
+          categoryId,
+          variantType: variantType === 'none' ? null : variantType,
+          variants: variantType === 'none' ? [] : variants
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        showToast(`✅ Товар "${name}" добавлен!`, '#22c55e');
+        overlay.remove();
+        
+        // Обновляем список товаров
+        await autoRefreshProducts();
+        showAdminCategory(categoryId);
+      } else {
+        showToast(`❌ Ошибка: ${result.error}`, '#e74c3c');
+        submitBtn.disabled = false;
+        submitBtn.textContent = '➕ Добавить';
+      }
+    } catch (error) {
+      console.error('Add product error:', error);
+      showToast('❌ Ошибка при добавлении товара', '#e74c3c');
+      submitBtn.disabled = false;
+      submitBtn.textContent = '➕ Добавить';
+    }
+  };
 }
