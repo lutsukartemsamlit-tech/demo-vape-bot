@@ -1837,6 +1837,7 @@ function showAdminProductDetail(chatId, productId, messageId = null) {
   }
 
   keyboard.push([
+    { text: '🗑️ Удалить товар', callback_data: `admin_delete_product_${product.id}` },
     { text: '⬅️ Назад', callback_data: `admin_cat_${product.categoryId}` }
   ]);
 
@@ -2437,6 +2438,23 @@ bot.on('callback_query', async (query) => {
       bot.sendMessage(chatId, '💨 Одноразка выбрана.\nВведите вкусы — каждый с новой строки:\nАрбуз лед\nМанго');
     }
     bot.answerCallbackQuery(query.id);
+  } else if (data.startsWith('admin_delete_product_')) {
+    const productId = data.replace('admin_delete_product_', '');
+    const product = products.find(p => p.id === productId);
+    if (!product) { bot.answerCallbackQuery(query.id, { text: '❌ Товар не найден' }); return; }
+    const categoryId = product.categoryId;
+    const idx = products.findIndex(p => p.id === productId);
+    products.splice(idx, 1);
+    // Save to Redis
+    if (redis) { try { await redis.set('products', JSON.stringify({ products, categories })); } catch(e) { console.error(e); } }
+    // Save to file
+    try {
+      const _fs = require('fs'), _path = require('path');
+      const js = 'const categories = ' + JSON.stringify(categories, null, 2) + ';\n\nconst products = ' + JSON.stringify(products, null, 2) + ';\n\nmodule.exports = { products, categories };\n';
+      _fs.writeFileSync(_path.join(__dirname, '..', 'data', 'products.js'), js, 'utf8');
+    } catch(e) { console.error(e); }
+    bot.answerCallbackQuery(query.id, { text: `✅ ${product.name} удалён`, show_alert: true });
+    showAdminCategoryProducts(chatId, categoryId, query.message.message_id);
   } else if (data.startsWith('admin_cat_')) {
     const categoryId = data.replace('admin_cat_', '');
     showAdminCategoryProducts(chatId, categoryId, query.message.message_id);
