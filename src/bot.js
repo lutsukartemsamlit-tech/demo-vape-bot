@@ -1237,16 +1237,28 @@ function checkout(chatId, userId, username, firstName, pickupPoint) {
   );
 
   // Уведомление всем администраторам
-  // Формируем информацию о клиенте
-  let clientInfo = `👤 Клиент: ${escapeMarkdown(firstName || 'Клиент')}`;
+  // Формируем информацию о клиенте (БЕЗ экранирования - будем использовать HTML)
+  let clientInfo = `👤 Клиент: ${firstName || 'Клиент'}`;
   if (username) {
     clientInfo += ` (@${username})`;
   }
-  clientInfo += `\n📝 ID: \`${userId}\``;
+  clientInfo += `\n📝 ID: ${userId}`;
   
-  const adminMessage = `${orderDetails}\n\n` +
+  // Сообщение админам - используем HTML вместо Markdown для надёжности
+  const adminMessage = `📦 <b>Новый заказ!</b>\n\n` +
+    cart.map((item, index) => {
+      const product = products.find(p => p.id === item.productId);
+      const itemTotal = product.price * item.quantity;
+      let itemText = `${index + 1}. ${product.name}`;
+      if (item.flavor) {
+        itemText += `\n   🎨 ${item.flavor}`;
+      }
+      itemText += `\n   ${item.quantity} × ${formatPrice(product.price)} = ${formatPrice(itemTotal)}`;
+      return itemText;
+    }).join('\n\n') + '\n\n' +
+    `💰 <b>Итого: ${formatPrice(total)}</b>\n\n` +
     `${clientInfo}\n` +
-    `🏪 Точка самовывоза: ${escapeMarkdown(pickupPoint)}\n` +
+    `🏪 Точка самовывоза: ${pickupPoint}\n` +
     `🆔 Заказ: #${orderId}`;
 
   // Функция отправки с retry для каждого админа
@@ -1257,7 +1269,7 @@ function checkout(chatId, userId, username, firstName, pickupPoint) {
           adminId,
           adminMessage,
           {
-            parse_mode: 'Markdown',
+            parse_mode: 'HTML',
             reply_markup: {
               inline_keyboard: [
                 [
