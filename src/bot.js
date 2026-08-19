@@ -2695,14 +2695,27 @@ bot.on('callback_query', async (query) => {
 
       const statusText = action === 'confirmed' ? '✅ подтвержден' : '❌ отменен';
       bot.answerCallbackQuery(query.id, { text: `Заказ ${statusText}` });
+
+      // При подтверждении оставляем кнопку "Завершить", при отмене — убираем все кнопки
+      const editOptions = {
+        chat_id: chatId,
+        message_id: query.message.message_id,
+        parse_mode: 'Markdown'
+      };
+
+      if (action === 'confirmed') {
+        editOptions.reply_markup = {
+          inline_keyboard: [
+            [{ text: '🏁 Завершить заказ', callback_data: `complete_${orderId}` }],
+            [{ text: '💬 Написать клиенту', callback_data: `contact_${order.userId}` }]
+          ]
+        };
+      }
+
       bot.editMessageText(
         `${query.message.text}\n\n*Статус: ${statusText.toUpperCase()}*`,
-        {
-          chat_id: chatId,
-          message_id: query.message.message_id,
-          parse_mode: 'Markdown'
-        }
-      );
+        editOptions
+      ).catch(() => {});
 
       // Уведомить клиента
       bot.sendMessage(
