@@ -1176,6 +1176,12 @@ function checkout(chatId, userId, username, firstName, pickupPoint) {
     return;
   }
 
+  // Функция для экранирования Markdown спец. символов
+  function escapeMarkdown(text) {
+    if (!text) return '';
+    return String(text).replace(/[_*[\]()~`>#+\-=|{}.!\\]/g, '\\$&');
+  }
+
   let total = 0;
   let orderDetails = '📦 *Новый заказ!*\n\n';
 
@@ -1184,9 +1190,9 @@ function checkout(chatId, userId, username, firstName, pickupPoint) {
     const itemTotal = product.price * item.quantity;
     total += itemTotal;
 
-    orderDetails += `${index + 1}. ${product.name}`;
+    orderDetails += `${index + 1}\\. ${escapeMarkdown(product.name)}`;
     if (item.flavor) {
-      orderDetails += `\n   🎨 ${item.flavor}`;
+      orderDetails += `\n   🎨 ${escapeMarkdown(item.flavor)}`;
     }
     orderDetails += `\n   ${item.quantity} × ${formatPrice(product.price)} = ${formatPrice(itemTotal)}\n\n`;
   });
@@ -1214,7 +1220,7 @@ function checkout(chatId, userId, username, firstName, pickupPoint) {
     `✅ Спасибо за заказ!\n\n` +
     `Номер заказа: *#${orderId}*\n\n` +
     orderDetails + `\n\n` +
-    `🏪 *Точка самовывоза:* ${pickupPoint}\n\n` +
+    `🏪 *Точка самовывоза:* ${escapeMarkdown(pickupPoint)}\n\n` +
     `💳 Оплата при получении наличными, при оплате переводом согласовывать с менеджером\n\n` +
     `Наш менеджер скоро свяжется с вами!`,
     { parse_mode: 'Markdown' }
@@ -1222,7 +1228,7 @@ function checkout(chatId, userId, username, firstName, pickupPoint) {
 
   // Уведомление всем администраторам
   // Формируем информацию о клиенте
-  let clientInfo = `👤 Клиент: ${firstName || 'Клиент'}`;
+  let clientInfo = `👤 Клиент: ${escapeMarkdown(firstName || 'Клиент')}`;
   if (username) {
     clientInfo += ` (@${username})`;
   }
@@ -1230,7 +1236,7 @@ function checkout(chatId, userId, username, firstName, pickupPoint) {
   
   const adminMessage = `${orderDetails}\n\n` +
     `${clientInfo}\n` +
-    `🏪 Точка самовывоза: ${pickupPoint}\n` +
+    `🏪 Точка самовывоза: ${escapeMarkdown(pickupPoint)}\n` +
     `🆔 Заказ: #${orderId}`;
 
   // Функция отправки с retry для каждого админа
