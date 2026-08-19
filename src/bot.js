@@ -1359,9 +1359,6 @@ function showAdminReviews(chatId, messageId = null, page = 0) {
 // �����-������
 function showAdminPanel(chatId, messageId = null) {
   const keyboard = [
-  if (categoryId === 'disposable') {
-    keyboard.push([{ text: 'Add', callback_data: 'add_device_start' }]);
-  }
     [{ text: '?? ���������� ��������', callback_data: 'admin_products' }],
     [{ text: '?? ���������� �������',  callback_data: 'admin_stats' }],
     [{ text: '? ������',              callback_data: 'admin_reviews' }],
@@ -1432,6 +1429,10 @@ function showAdminCategoryProducts(chatId, categoryId, messageId = null) {
     }]);
   });
   
+  if (categoryId === 'disposable') {
+    keyboard.push([{ text: '➕ Добавить устройство', callback_data: 'add_device_start' }]);
+  }
+
   keyboard.push([{ text: '?? �����', callback_data: 'admin_products' }]);
 
   const text = `?? *${category.name}*\n\n�������� ����� ��� ����������:`;
@@ -2091,9 +2092,8 @@ bot.on('callback_query', async (query) => {
   } else if (data === 'add_device_start') {
     addProductState[userId] = { step: 'device_name', data: { categoryId: 'disposable' } };
     bot.editMessageText(
-      'Add device\n\nEnter name:',
-      { chat_id: chatId, message_id: query.message.message_id }
-    );
+      '➕ *Добавление устройства*\n\nВведите название:\n\n_Например: XROS 7 или Meloso X_\n\nДля отмены: /cancel',
+      { chat_id: chatId, message_id: query.message.message_id, parse_mode: 'Markdown' });
     bot.answerCallbackQuery(query.id);
   } else if (data.startsWith('admin_cat_')) {
     const categoryId = data.replace('admin_cat_', '');
@@ -2636,8 +2636,7 @@ bot.on('callback_query', async (query) => {
 
       bot.editMessageText(
         `? ������� �� �����, ${firstName}! ??`,
-        { chat_id: chatId, message_id: query.message.message_id }
-      );
+        { chat_id: chatId, message_id: query.message.message_id, parse_mode: 'Markdown' });
 
       // ���������� �������
       const stars = '?'.repeat(state.rating);
