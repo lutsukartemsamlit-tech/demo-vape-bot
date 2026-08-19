@@ -1233,26 +1233,48 @@ function checkout(chatId, userId, username, firstName, pickupPoint) {
     `🏪 Точка самовывоза: ${pickupPoint}\n` +
     `🆔 Заказ: #${orderId}`;
 
-  adminIds.forEach(id => {
-    bot.sendMessage(
-      id,
-      adminMessage,
-      {
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [
-              { text: '✅ Подтвердить', callback_data: `confirm_${orderId}` },
-              { text: '❌ Отменить', callback_data: `cancel_${orderId}` }
-            ],
-            [
-              { text: '💬 Написать клиенту', callback_data: `contact_${userId}` }
-            ]
-          ]
+  // Функция отправки с retry для каждого админа
+  async function sendToAdmin(adminId, retries = 3) {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        await bot.sendMessage(
+          adminId,
+          adminMessage,
+          {
+            parse_mode: 'Markdown',
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  { text: '✅ Подтвердить', callback_data: `confirm_${orderId}` },
+                  { text: '❌ Отменить', callback_data: `cancel_${orderId}` }
+                ],
+                [
+                  { text: '💬 Написать клиенту', callback_data: `contact_${userId}` }
+                ]
+              ]
+            }
+          }
+        );
+        console.log(`✅ Заказ ${orderId} отправлен админу ${adminId} (попытка ${attempt})`);
+        return true;
+      } catch (err) {
+        console.error(`❌ Не удалось отправить заказ ${orderId} админу ${adminId} (попытка ${attempt}/${retries}):`, err.message);
+        if (attempt < retries) {
+          // Ждём перед следующей попыткой (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
         }
       }
-    ).catch(err => console.log(`❌ Не удалось отправить заказ админу ${id}:`, err.message));
-  });
+    }
+    return false;
+  }
+
+  // Отправляем всем админам параллельно с retry
+  Promise.all(adminIds.map(id => sendToAdmin(id)))
+    .then(results => {
+      const successCount = results.filter(r => r).length;
+      console.log(`📊 Заказ ${orderId}: отправлено ${successCount}/${adminIds.length} админам`);
+    })
+    .catch(err => console.error('❌ Ошибка при отправке заказа админам:', err));
 
   // Очистить корзину
   userCarts[chatId] = [];
