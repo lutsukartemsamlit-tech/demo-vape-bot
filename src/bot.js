@@ -129,6 +129,16 @@ const botOptions = {
 
 const bot = new TelegramBot(token, botOptions);
 
+// Обработка ошибок polling (409 Conflict - нормальная ситуация при перезапуске)
+bot.on('polling_error', (error) => {
+  // Игнорируем 409 Conflict - это происходит при перезапуске бота
+  if (error.code === 'ETELEGRAM' && error.message.includes('409 Conflict')) {
+    console.log('⚠️ Polling conflict (бот перезапускается)');
+  } else {
+    console.error('❌ Polling error:', error.code, error.message);
+  }
+});
+
 // Загружаем товары из Redis при старте
 loadProductsFromRedis().then(() => {
   console.log('✅ Бот запущен, товары загружены');
