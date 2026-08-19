@@ -1224,16 +1224,29 @@ function checkout(chatId, userId, username, firstName, pickupPoint) {
 
   saveOrder(order);
 
-  // Уведомление клиенту
+  // Уведомление клиенту (тоже используем HTML для надёжности)
+  const clientOrderText = `✅ Спасибо за заказ!\n\n` +
+    `Номер заказа: <b>#${orderId}</b>\n\n` +
+    `📦 <b>Новый заказ!</b>\n\n` +
+    cart.map((item, index) => {
+      const product = products.find(p => p.id === item.productId);
+      const itemTotal = product.price * item.quantity;
+      let itemText = `${index + 1}. ${product.name}`;
+      if (item.flavor) {
+        itemText += `\n   🎨 ${item.flavor}`;
+      }
+      itemText += `\n   ${item.quantity} × ${formatPrice(product.price)} = ${formatPrice(itemTotal)}`;
+      return itemText;
+    }).join('\n\n') + '\n\n' +
+    `💰 <b>Итого: ${formatPrice(total)}</b>\n\n` +
+    `🏪 <b>Точка самовывоза:</b> ${pickupPoint}\n\n` +
+    `💳 Оплата при получении наличными, при оплате переводом согласовывать с менеджером\n\n` +
+    `Наш менеджер скоро свяжется с вами!`;
+
   bot.sendMessage(
     chatId,
-    `✅ Спасибо за заказ!\n\n` +
-    `Номер заказа: *#${orderId}*\n\n` +
-    orderDetails + `\n\n` +
-    `🏪 *Точка самовывоза:* ${escapeMarkdown(pickupPoint)}\n\n` +
-    `💳 Оплата при получении наличными, при оплате переводом согласовывать с менеджером\n\n` +
-    `Наш менеджер скоро свяжется с вами!`,
-    { parse_mode: 'Markdown' }
+    clientOrderText,
+    { parse_mode: 'HTML' }
   );
 
   // Уведомление всем администраторам
