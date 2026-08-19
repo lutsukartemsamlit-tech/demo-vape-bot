@@ -1290,6 +1290,9 @@ function checkout(chatId, userId, username, firstName, pickupPoint) {
                   { text: '❌ Отменить', callback_data: `cancel_${orderId}` }
                 ],
                 [
+                  { text: '🏁 Завершить заказ', callback_data: `complete_${orderId}` }
+                ],
+                [
                   { text: '💬 Написать клиенту', callback_data: `contact_${userId}` }
                 ]
               ]
@@ -2595,6 +2598,86 @@ bot.on('callback_query', async (query) => {
     const firstName = query.from.first_name || 'Клиент';
     checkout(chatId, userId, username, firstName, point.address);
     bot.answerCallbackQuery(query.id);
+  } else if (data.startsWith('complete_')) {
+    // Завершить заказ — выключить купленные вкусы в ассортименте
+    if (!isAdmin(userId)) {
+      bot.answerCallbackQuery(query.id, { text: '❌ Доступ запрещен' });
+      return;
+    }
+
+    const orderId = data.replace('complete_', '');
+    const orders = getOrders();
+    const order = orders.find(o => o.id === orderId);
+
+    if (!order) {
+      bot.answerCallbackQuery(query.id, { text: '❌ Заказ не найден', show_alert: true });
+      return;
+    }
+
+    // Выключаем вкусы для каждого товара в заказе
+    const disabledFlavors = [];
+    const orderItems = order.items || [];
+
+    for (const item of orderItems) {
+      if (!item.flavor) continue; // товар без вкуса — пропускаем
+
+      const product = products.find(p => p.id === item.productId);
+      if (!product || !product.flavors) continue;
+
+      // Ищем вкус по имени
+      const flavorIndex = product.flavors.findIndex(f => {
+        const name = typeof f === 'string' ? f : f.name;
+        return name === item.flavor;
+      });
+
+      if (flavorIndex !== -1) {
+        const flavor = product.flavors[flavorIndex];
+        if (typeof flavor === 'object') {
+          flavor.enabled = false;
+        } else {
+          product.flavors[flavorIndex] = { name: flavor, stock: '', enabled: false };
+        }
+        disabledFlavors.push(`${product.name} — ${item.flavor}`);
+        console.log(`✅ Вкус выключен: ${product.name} / ${item.flavor}`);
+      }
+    }
+
+    // Сохраняем в файл
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const contentJs = '// Категории товаров\nconst categories = ' + JSON.stringify(categories, null, 2) + ';\n\n// Товары\nconst products = ' + JSON.stringify(products, null, 2) + ';\n\nmodule.exports = { products, categories };\n';
+      fs.writeFileSync(path.join(__dirname, '..', 'data', 'products.js'), contentJs, 'utf8');
+    } catch(e) { console.error('Save products error:', e.message); }
+
+    // Синхронизируем с Redis
+    if (redis) {
+      redis.set('products', JSON.stringify({ products, categories }))
+        .then(() => console.log('✅ Redis обновлён после завершения заказа'))
+        .catch(e => console.error('❌ Ошибка Redis:', e.message));
+    }
+
+    // Обновляем статус заказа
+    order.status = 'completed';
+    saveOrder(order);
+
+    const disabledText = disabledFlavors.length > 0
+      ? `\n\n🔴 Выключено вкусов: ${disabledFlavors.length}\n${disabledFlavors.map(f => `• ${f}`).join('\n')}`
+      : '\n\n(товары без вкусов — ничего не выключено)';
+
+    bot.answerCallbackQuery(query.id, { text: `🏁 Заказ завершён!${disabledFlavors.length > 0 ? ` Выключено: ${disabledFlavors.length} вкусов` : ''}`, show_alert: true });
+
+    // Обновляем сообщение
+    const originalText = query.message.text || query.message.caption || '';
+    bot.editMessageText(
+      `${originalText}\n\n🏁 <b>ЗАКАЗ ЗАВЕРШЁН</b>${disabledText}`,
+      {
+        chat_id: chatId,
+        message_id: query.message.message_id,
+        parse_mode: 'HTML'
+      }
+    ).catch(() => {});
+
   } else if (data.startsWith('confirm_') || data.startsWith('cancel_')) {
     if (!isAdmin(userId)) {
       bot.answerCallbackQuery(query.id, { text: '❌ Доступ запрещен' });
@@ -2930,6 +3013,9 @@ bot.on('message', (msg) => {
           [
             { text: '✅ Подтвердить', callback_data: `confirm_${orderId}` },
             { text: '❌ Отменить',    callback_data: `cancel_${orderId}` }
+          ],
+          [
+            { text: '🏁 Завершить заказ', callback_data: `complete_${orderId}` }
           ],
           [
             { text: '💬 Написать клиенту', callback_data: `contact_${userId}` }
