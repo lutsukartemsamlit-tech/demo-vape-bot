@@ -469,6 +469,13 @@ bot.on('message', async (msg) => {
     const state = addProductState[userId];
     const adminMenuObj = buildAdminMenu(WEBAPP_URL, userId);
 
+    // Если пользователь нажал кнопку меню — сбрасываем режим добавления
+    const menuButtons = ['🛍️ Ассортимент', '🛒 Корзина', '📞 Поддержка', '⚪ Главное меню', '⚙️ Админ-панель'];
+    if (menuButtons.some(btn => text.includes(btn.split(' ').slice(1).join(' ')))) {
+      delete addProductState[userId];
+      // state cleared, fall through to normal switch handler
+    }
+
     // Добавление вкусов к существующей жидкости
     if (state.step === 'add_flavors') {
       // Перезагружаем товары из Redis чтобы получить актуальные данные
