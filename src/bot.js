@@ -241,6 +241,40 @@ function sendSubscribeMessage(chatId) {
       return;
     }
 
+    if (state.step === 'device_name') {
+      state.data.name = text;
+      state.step = 'device_price';
+      bot.sendMessage(chatId, 'Введите цену (например: 2500)');
+      return;
+    }
+
+    if (state.step === 'device_price') {
+      const price = parseInt(text);
+      if (isNaN(price) || price <= 0) {
+        bot.sendMessage(chatId, 'Неверная цена');
+        return;
+      }
+      state.data.price = price;
+      state.data.cashPrice = price;
+      state.step = 'device_desc';
+      bot.sendMessage(chatId, 'Введите описание:');
+      return;
+    }
+
+    if (state.step === 'device_desc') {
+      state.data.description = text;
+      state.step = 'device_type';
+      bot.sendMessage(chatId, 'Выберите тип:', {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '🔋 Под', callback_data: 'device_type_pod' }],
+            [{ text: '💨 Одноразка', callback_data: 'device_type_disposable' }]
+          ]
+        }
+      });
+      return;
+    }
+
     if (state.step === 'name') {
       state.data.name = text;
       state.step = 'price';
