@@ -787,6 +787,61 @@ bot.on('message', async (msg) => {
       );
       return;
     }
+
+    // Добавление товара в Расходники (accessories)
+    if (state.step === 'acc_name') {
+      state.data.name = text;
+      state.step = 'acc_desc';
+      bot.sendMessage(chatId, 'Введите описание товара:');
+      return;
+    }
+
+    if (state.step === 'acc_desc') {
+      state.data.description = text;
+      state.step = 'acc_price';
+      bot.sendMessage(chatId, 'Введите цену (в рублях, например: 150):');
+      return;
+    }
+
+    if (state.step === 'acc_price') {
+      const price = parseFloat(text);
+      if (isNaN(price) || price <= 0) {
+        bot.sendMessage(chatId, '❌ Неверная цена. Введите число больше 0');
+        return;
+      }
+      state.data.price = price;
+      state.data.cashPrice = Math.round(price * 0.9);
+      state.step = 'acc_flavors';
+      bot.sendMessage(chatId, 'Введите варианты/вкусы (каждый с новой строки):\n\nНапример:\nCRANBERRY TEA\nDOUBLE MINT\nENERGY MANGO');
+      return;
+    }
+
+    if (state.step === 'acc_flavors') {
+      const flavors = text.split('\n').map(v => v.trim()).filter(v => v.length > 0);
+      if (flavors.length === 0) {
+        bot.sendMessage(chatId, '❌ Укажите хотя бы один вариант');
+        return;
+      }
+      state.data.flavors = flavors.map(name => ({ name, stock: '', enabled: true }));
+      const baseId = state.data.name.toLowerCase().replace(/[^a-z0-9\s]/gi, '').trim().replace(/\s+/g, '_').substring(0, 20);
+      state.data.id = products.find(p => p.id === baseId) ? `${baseId}_${Date.now().toString(36)}` : baseId;
+      state.data.stock = 50;
+      state.data.enabled = true;
+      
+      // Переходим к фото
+      state.step = 'acc_image';
+      bot.sendMessage(chatId,
+        `✅ Добавлено вариантов: ${flavors.length}\n\nОтправьте фото товара или нажмите "Пропустить"`,
+        {
+          reply_markup: {
+            inline_keyboard: [[
+              { text: '➡️ Пропустить фото', callback_data: 'skip_acc_image' }
+            ]]
+          }
+        }
+      );
+      return;
+    }
   }
 
   // Если АДМИН в режиме ответа — пересылаем его сообщение пользователю
