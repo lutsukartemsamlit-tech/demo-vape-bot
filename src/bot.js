@@ -435,6 +435,39 @@ bot.on('photo', async (msg) => {
     return;
   }
 
+  // Если админ добавляет фото для линейки (subproduct)
+  if (addProductState[userId] && addProductState[userId].step === 'sub_image') {
+    const state = addProductState[userId];
+    state.data.image = photo.file_id;
+
+    // Добавляем линейку в массив продуктов
+    products.push(state.data);
+
+    // Добавляем ID линейки в subProducts родителя
+    const parentProduct = products.find(p => p.id === state.data.parentId);
+    if (parentProduct) {
+      if (!parentProduct.subProducts) {
+        parentProduct.subProducts = [];
+      }
+      parentProduct.subProducts.push(state.data.id);
+    }
+
+    // Сохраняем в Redis
+    if (redis) {
+      try {
+        await redis.set('products', JSON.stringify({ products, categories }));
+        console.log('✅ Линейка с фото сохранена в Redis');
+      } catch (e) {
+        console.error('❌ Ошибка Redis:', e);
+      }
+    }
+
+    const summary = `✅ *Линейка добавлена с фото!*\n\n📍 ${state.data.name}\n💰 ${formatPrice(state.data.price)}\n🎨 Вариантов: ${state.data.flavors.length}\n🆔 ID: \`${state.data.id}\``;
+    delete addProductState[userId];
+    bot.sendMessage(chatId, summary, { parse_mode: 'Markdown', ...buildAdminMenu(WEBAPP_URL, userId) });
+    return;
+  }
+
   // Если пользователь в шаге отправки фото для отзыва
   if (reviewState[userId] && reviewState[userId].step === 'photo') {
     const state = reviewState[userId];
@@ -713,35 +746,22 @@ bot.on('message', async (msg) => {
       return;
     }
 
-    // Добавление товара в Расходники (шайбы, испары, etc)
-    if (state.step === 'acc_name') {
+    // Добавление дочерней линейки (например, новая линейка шайб)
+    if (state.step === 'sub_name') {
       state.data.name = text;
-      state.step = 'acc_price';
-      bot.sendMessage(chatId, 'Введите цену (например: 400)');
+      state.step = 'sub_desc';
+      bot.sendMessage(chatId, 'Введите описание линейки:');
       return;
     }
 
-    if (state.step === 'acc_price') {
-      const price = parseInt(text);
-      if (isNaN(price) || price <= 0) {
-        bot.sendMessage(chatId, '❌ Неверная цена');
-        return;
-      }
-      state.data.price = price;
-      state.data.cashPrice = price;
-      state.step = 'acc_desc';
-      bot.sendMessage(chatId, 'Введите описание:');
-      return;
-    }
-
-    if (state.step === 'acc_desc') {
+    if (state.step === 'sub_desc') {
       state.data.description = text;
-      state.step = 'acc_flavors';
+      state.step = 'sub_flavors';
       bot.sendMessage(chatId, 'Введите варианты/вкусы (каждый с новой строки):\n\nНапример:\nCRANBERRY TEA\nDOUBLE MINT\nENERGY MANGO');
       return;
     }
 
-    if (state.step === 'acc_flavors') {
+    if (state.step === 'sub_flavors') {
       const flavors = text.split('\n').map(v => v.trim()).filter(v => v.length > 0);
       if (flavors.length === 0) {
         bot.sendMessage(chatId, '❌ Укажите хотя бы один вариант');
@@ -754,13 +774,13 @@ bot.on('message', async (msg) => {
       state.data.enabled = true;
       
       // Переходим к фото
-      state.step = 'acc_image';
+      state.step = 'sub_image';
       bot.sendMessage(chatId,
-        `✅ Добавлено вариантов: ${flavors.length}\n\nОтправьте фото или нажмите "Пропустить"`,
+        `✅ Добавлено вариантов: ${flavors.length}\n\nОтправьте фото линейки или нажмите "Пропустить"`,
         {
           reply_markup: {
             inline_keyboard: [[
-              { text: '➡️ Пропустить фото', callback_data: 'skip_acc_image' }
+              { text: '➡️ Пропустить фото', callback_data: 'skip_sub_image' }
             ]]
           }
         }
@@ -986,6 +1006,12 @@ function showProductDetail(chatId, productId, messageId = null) {
     subItems.forEach(sub => {
       keyboard.push([{ text: sub.name, callback_data: `view_${sub.id}` }]);
     });
+    
+    // Для админов добавляем кнопку добавления новой линейки
+    if (isAdmin(userId)) {
+      keyboard.push([{ text: '➕ Добавить линейку', callback_data: `add_subproduct_${product.id}` }]);
+    }
+    
     keyboard.push([
       { text: '⬅️ Назад', callback_data: `cat_${product.categoryId}` }
     ]);
@@ -2435,6 +2461,41 @@ bot.on('callback_query', async (query) => {
     return;
   }
 
+  // Пропустить добавление фото линейки
+  if (data === 'skip_sub_image') {
+    if (addProductState[userId] && addProductState[userId].step === 'sub_image') {
+      const state = addProductState[userId];
+
+      // Добавляем линейку без фото
+      products.push(state.data);
+
+      // Добавляем ID линейки в subProducts родителя
+      const parentProduct = products.find(p => p.id === state.data.parentId);
+      if (parentProduct) {
+        if (!parentProduct.subProducts) {
+          parentProduct.subProducts = [];
+        }
+        parentProduct.subProducts.push(state.data.id);
+      }
+
+      // Сохраняем в Redis
+      if (redis) {
+        try {
+          await redis.set('products', JSON.stringify({ products, categories }));
+        } catch (e) {
+          console.error('❌ Ошибка Redis:', e);
+        }
+      }
+      
+      delete addProductState[userId];
+
+      const summary = `✅ *Линейка добавлена!*\n\n📍 ${state.data.name}\n💰 ${formatPrice(state.data.price)}\n🎨 Вариантов: ${state.data.flavors.length}\n🆔 ID: \`${state.data.id}\``;
+      bot.deleteMessage(chatId, query.message.message_id).catch(() => {});
+      bot.sendMessage(chatId, summary, { parse_mode: 'Markdown', ...buildAdminMenu(WEBAPP_URL, userId) });
+    }
+    return;
+  }
+
   // Выбор жидкости для добавления вкусов
   if (data.startsWith('addflavor_')) {
     const productId = data.replace('addflavor_', '');
@@ -2586,6 +2647,26 @@ bot.on('callback_query', async (query) => {
   } else if (data === 'add_accessory_start') {
     addProductState[userId] = { step: 'acc_name', data: { categoryId: 'accessories', icon: '📍' } };
     bot.editMessageText('➕ *Добавление товара*\n\nВведите название:\n_Например: Шайбы IceBerg_', { chat_id: chatId, message_id: query.message.message_id, parse_mode: 'Markdown' });
+    bot.sendMessage(chatId, 'Введите данные или /cancel для отмены', { reply_markup: { remove_keyboard: true } });
+    bot.answerCallbackQuery(query.id);
+  } else if (data.startsWith('add_subproduct_')) {
+    const parentId = data.replace('add_subproduct_', '');
+    const parentProduct = products.find(p => p.id === parentId);
+    if (!parentProduct) {
+      bot.answerCallbackQuery(query.id, { text: '❌ Родительский товар не найден' });
+      return;
+    }
+    addProductState[userId] = { 
+      step: 'sub_name', 
+      data: { 
+        categoryId: parentProduct.categoryId, 
+        icon: parentProduct.icon,
+        parentId: parentId,
+        price: parentProduct.price,
+        cashPrice: parentProduct.cashPrice
+      } 
+    };
+    bot.editMessageText(`➕ *Добавление линейки к "${parentProduct.name}"*\n\nВведите название линейки:\n_Например: IceBerg Ultra 150мг_`, { chat_id: chatId, message_id: query.message.message_id, parse_mode: 'Markdown' });
     bot.sendMessage(chatId, 'Введите данные или /cancel для отмены', { reply_markup: { remove_keyboard: true } });
     bot.answerCallbackQuery(query.id);
   } else if (data === 'device_type_pod') {
