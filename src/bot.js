@@ -1045,7 +1045,7 @@ function showCategoryProducts(chatId, categoryId, messageId = null) {
 }
 
 // Показать детальную карточку товара
-function showProductDetail(chatId, productId, messageId = null) {
+function showProductDetail(chatId, productId, messageId = null, userId = null) {
   const product = products.find(p => p.id === productId);
   
   if (!product) {
@@ -1063,7 +1063,7 @@ function showProductDetail(chatId, productId, messageId = null) {
     });
     
     // Для админов добавляем кнопку добавления новой линейки
-    if (isAdmin(userId)) {
+    if (userId && isAdmin(userId)) {
       keyboard.push([{ text: '➕ Добавить линейку', callback_data: `add_subproduct_${product.id}` }]);
     }
     
@@ -2927,7 +2927,7 @@ bot.on('callback_query', async (query) => {
     bot.answerCallbackQuery(query.id);
   } else if (data.startsWith('view_')) {
     const productId = data.replace('view_', '');
-    showProductDetail(chatId, productId, query.message.message_id);
+    showProductDetail(chatId, productId, query.message.message_id, userId);
     bot.answerCallbackQuery(query.id);
   } else if (data.startsWith('add_')) {
     const productId = data.replace('add_', '');
@@ -3021,7 +3021,7 @@ bot.on('callback_query', async (query) => {
     });
 
     // Возвращаемся к карточке товара
-    showProductDetail(chatId, productId, query.message.message_id);
+    showProductDetail(chatId, productId, query.message.message_id, userId);
 
   } else if (data === 'clear_cart') {
     userCarts[chatId] = [];
