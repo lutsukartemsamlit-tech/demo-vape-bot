@@ -1143,6 +1143,12 @@ function showProductDetail(chatId, productId, messageId = null, userId = null) {
           caption: caption,
           parse_mode: 'Markdown',
           reply_markup: { inline_keyboard: keyboard }
+        }).catch(() => {
+          // Если фото не отправляется - отправляем текст
+          bot.sendMessage(chatId, caption, {
+            parse_mode: 'Markdown',
+            reply_markup: { inline_keyboard: keyboard }
+          });
         });
       });
     } else if (isTelegramFileId) {
@@ -1150,6 +1156,12 @@ function showProductDetail(chatId, productId, messageId = null, userId = null) {
         caption: caption,
         parse_mode: 'Markdown',
         reply_markup: { inline_keyboard: keyboard }
+      }).catch(() => {
+        // Если фото не отправляется - отправляем текст
+        bot.sendMessage(chatId, caption, {
+          parse_mode: 'Markdown',
+          reply_markup: { inline_keyboard: keyboard }
+        });
       });
     } else {
       // Без фото - только текст
@@ -1260,6 +1272,12 @@ function showProductDetail(chatId, productId, messageId = null, userId = null) {
           caption: caption,
           parse_mode: 'Markdown',
           reply_markup: { inline_keyboard: keyboard }
+        }).catch(() => {
+          // Если фото не отправляется - отправляем текст
+          bot.sendMessage(chatId, caption, {
+            parse_mode: 'Markdown',
+            reply_markup: { inline_keyboard: keyboard }
+          });
         });
       });
     } else {
