@@ -983,7 +983,8 @@ function showAssortment(chatId, messageId = null) {
 // Показать товары категории (простой список кнопок)
 function showCategoryProducts(chatId, categoryId, messageId = null) {
   const category = categories.find(c => c.id === categoryId);
-  const categoryProducts = products.filter(p => p.categoryId === categoryId);
+  // Исключаем дочерние продукты (с parentId) из списка категории
+  const categoryProducts = products.filter(p => p.categoryId === categoryId && !p.parentId);
 
   if (categoryProducts.length === 0) {
     const keyboard = [[{ text: '« К категориям', callback_data: 'back_categories' }]];
@@ -1009,8 +1010,7 @@ function showCategoryProducts(chatId, categoryId, messageId = null) {
 
   const keyboard = [];
   
-  // Показываем только товары без parentId (не дочерние)
-  categoryProducts.filter(p => !p.parentId).forEach(product => {
+  categoryProducts.forEach(product => {
     keyboard.push([{ 
       text: `${product.name} - ${formatPrice(product.price)}`.toUpperCase(), 
       callback_data: `view_${product.id}` 
@@ -1932,7 +1932,8 @@ function showAdminProducts(chatId, messageId = null) {
 // Список товаров категории для админа
 function showAdminCategoryProducts(chatId, categoryId, messageId = null) {
   const category = categories.find(c => c.id === categoryId);
-  const categoryProducts = products.filter(p => p.categoryId === categoryId);
+  // Исключаем дочерние продукты (с parentId) из списка категории
+  const categoryProducts = products.filter(p => p.categoryId === categoryId && !p.parentId);
 
   const keyboard = [];
   
