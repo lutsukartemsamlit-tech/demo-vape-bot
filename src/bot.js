@@ -389,6 +389,29 @@ bot.on('photo', async (msg) => {
     return;
   }
 
+  // Если админ добавляет фото для нового устройства
+  if (addProductState[userId] && addProductState[userId].step === 'device_image') {
+    const state = addProductState[userId];
+    state.data.image = photo.file_id;
+    state.data.location = 'Нет данных';
+
+    // Сохраняем устройство
+    products.push(state.data);
+    if (redis) {
+      try {
+        await redis.set('products', JSON.stringify({ products, categories }));
+        console.log('✅ Устройство с фото сохранено в Redis');
+      } catch (e) {
+        console.error('❌ Ошибка Redis:', e);
+      }
+    }
+
+    const summary = `✅ *Устройство добавлено с фото!*\n\n📱 ${state.data.name}\n💰 ${formatPrice(state.data.price)}\n🆔 ID: \`${state.data.id}\``;
+    delete addProductState[userId];
+    bot.sendMessage(chatId, summary, { parse_mode: 'Markdown', ...buildAdminMenu(WEBAPP_URL, userId) });
+    return;
+  }
+
   // Если пользователь в шаге отправки фото для отзыва
   if (reviewState[userId] && reviewState[userId].step === 'photo') {
     const state = reviewState[userId];
@@ -650,20 +673,20 @@ bot.on('message', async (msg) => {
       const baseId = state.data.name.toLowerCase().replace(/[^a-z0-9\s]/gi, '').trim().replace(/\s+/g, '_').substring(0, 20);
       state.data.id = products.find(p => p.id === baseId) ? `${baseId}_${Date.now().toString(36)}` : baseId;
       state.data.stock = 50;
-      state.data.location = 'Нет данных';
       state.data.enabled = true;
-      products.push(state.data);
-      if (redis) {
-        try {
-          await redis.set('products', JSON.stringify({ products, categories }));
-          console.log('✅ Новое устройство сохранено в Redis');
-        } catch (e) {
-          console.error('❌ Ошибка Redis:', e);
+      
+      // Переходим к добавлению фото
+      state.step = 'device_image';
+      bot.sendMessage(chatId,
+        `✅ Добавлено вариантов: ${variants.length}\n\nТеперь отправьте фото устройства или нажмите "Пропустить"`,
+        {
+          reply_markup: {
+            inline_keyboard: [[
+              { text: '➡️ Пропустить фото', callback_data: 'skip_device_image' }
+            ]]
+          }
         }
-      }
-      const summary = `✅ *Устройство добавлено!*\n\n📱 ${state.data.name}\n💰 ${formatPrice(state.data.price)}\n📊 ${variants.length} вариантов`;
-      delete addProductState[userId];
-      bot.sendMessage(chatId, summary, { parse_mode: 'Markdown', ...adminMenuObj });
+      );
       return;
     }
   }
@@ -2277,6 +2300,31 @@ bot.on('callback_query', async (query) => {
       } else {
         bot.answerCallbackQuery(query.id, { text: `❌ ${result.error}`, show_alert: true });
       }
+    }
+    return;
+  }
+
+  // Пропустить добавление фото устройства
+  if (data === 'skip_device_image') {
+    if (addProductState[userId] && addProductState[userId].step === 'device_image') {
+      const state = addProductState[userId];
+      state.data.location = 'Нет данных';
+
+      // Сохраняем устройство без фото
+      products.push(state.data);
+      if (redis) {
+        try {
+          await redis.set('products', JSON.stringify({ products, categories }));
+        } catch (e) {
+          console.error('❌ Ошибка Redis:', e);
+        }
+      }
+      
+      delete addProductState[userId];
+
+      const summary = `✅ *Устройство добавлено!*\n\n📱 ${state.data.name}\n💰 ${formatPrice(state.data.price)}\n🆔 ID: \`${state.data.id}\``;
+      bot.deleteMessage(chatId, query.message.message_id).catch(() => {});
+      bot.sendMessage(chatId, summary, { parse_mode: 'Markdown', ...buildAdminMenu(WEBAPP_URL, userId) });
     }
     return;
   }
