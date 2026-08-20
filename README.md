@@ -1,4 +1,4 @@
-# PuffNow_63 — Telegram Bot
+# Demo_bot — Telegram Bot
 
 Бот для магазина вейп-продукции с админ-панелью.
 

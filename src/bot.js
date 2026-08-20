@@ -204,7 +204,7 @@ bot.onText(/\/start/, async (msg) => {
   
   const welcomeText = 
     `Привет, ${firstName}! 👋\n\n` +
-    `Добро пожаловать в PuffNow_63! 🏪\n\n` +
+    `Добро пожаловать в Demo_bot! 🏪\n\n` +
     `💨 У нас большой ассортимент вейп-продукции:\n` +
     `• Одноразки/подики\n` +
     `• Жидкости\n` +
@@ -1642,7 +1642,7 @@ function checkout(chatId, userId, username, firstName, pickupPoint) {
 function showAbout(chatId) {
   bot.sendMessage(
     chatId,
-    `🏪 *PuffNow_63*\n\n` +
+    `🏪 *Demo_bot*\n\n` +
     `Мы предлагаем:\n` +
     `💨 Оригинальная продукция\n` +
     `🚚 Быстрая доставка по Омску\n` +
@@ -1698,7 +1698,7 @@ function showManagers(chatId) {
     chatId,
     `👥 *Менеджеры*\n\n` +
     `По всем вопросам пишите нашему менеджеру:\n\n` +
-    `👨‍💼 @PuffNow\\_63\n\n` +
+    `👨‍💼 @demo_manager\n\n` +
     `Нашли баг в боте?\n\n👨‍💼 @neresu`,
     { parse_mode: 'Markdown' }
   );
@@ -2503,7 +2503,7 @@ bot.on('callback_query', async (query) => {
       const adminMenu = buildAdminMenu(WEBAPP_URL, userId);
       const welcomeText =
         `Привет, ${firstName}! 👋\n\n` +
-        `Добро пожаловать в PuffNow_63! 🏪\n\n` +
+        `Добро пожаловать в Demo_bot! 🏪\n\n` +
         `💨 У нас большой ассортимент вейп-продукции:\n` +
         `• Одноразки/подики\n` +
         `• Жидкости\n` +

@@ -345,6 +345,11 @@ html, body {
   cursor: pointer;
   transition: all 0.2s;
   color: var(--text-secondary);
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .flavor-chip.selected {
@@ -659,6 +664,12 @@ html, body {
   to { transform: rotate(360deg); }
 }
 
+/* Admin refresh card pulse effect */
+@keyframes refreshPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
 /* TOAST */
 .toast {
   position: fixed;
@@ -954,6 +965,7 @@ html, body {
   gap: 20px;
 }
 
+.order-summary,
 .checkout-summary {
   background: var(--glass-bg);
   backdrop-filter: blur(20px);
@@ -963,6 +975,7 @@ html, body {
   margin-bottom: 8px;
 }
 
+.order-summary h3,
 .checkout-summary h3 {
   font-size: 16px;
   font-weight: 600;
@@ -970,6 +983,14 @@ html, body {
   margin-bottom: 16px;
 }
 
+.order-summary-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+
+.order-summary-item,
 .checkout-item {
   display: flex;
   justify-content: space-between;
@@ -978,10 +999,12 @@ html, body {
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+.order-summary-item:last-child,
 .checkout-item:last-child {
   border-bottom: none;
 }
 
+.order-summary-item span:first-child,
 .checkout-item-name {
   font-size: 14px;
   color: var(--text);
@@ -994,6 +1017,7 @@ html, body {
   margin-top: 4px;
 }
 
+.order-summary-item span:last-child,
 .checkout-item-price {
   font-size: 14px;
   font-weight: 600;
@@ -1001,6 +1025,7 @@ html, body {
   margin-left: 12px;
 }
 
+.order-summary-total,
 .checkout-total-row {
   display: flex;
   justify-content: space-between;
@@ -1010,12 +1035,14 @@ html, body {
   border-top: 2px solid rgba(102, 126, 234, 0.3);
 }
 
+.order-summary-total span:first-child,
 .checkout-total-label {
   font-size: 16px;
   font-weight: 600;
   color: var(--text);
 }
 
+.order-summary-total span:last-child,
 .checkout-total-value {
   font-size: 22px;
   font-weight: 700;
@@ -1139,4 +1166,72 @@ html, body {
 .submit-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ─── ЭКРАН УСПЕШНОГО ЗАКАЗА ───────────────────────────────────────────────── */
+
+.success-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 30px;
+  text-align: center;
+  min-height: 400px;
+}
+
+.success-icon {
+  font-size: 80px;
+  margin-bottom: 24px;
+  filter: drop-shadow(0 4px 16px rgba(102, 126, 234, 0.4));
+  animation: bounce 0.6s ease-in-out;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+.success-screen h2 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+.success-order-id {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--accent-light);
+  background: rgba(102, 126, 234, 0.15);
+  padding: 8px 20px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  display: inline-block;
+}
+
+.success-screen p {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 32px;
+  max-width: 400px;
+}
+
+.success-home-btn {
+  padding: 16px 32px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 16px;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+}
+
+.success-home-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.6);
 }

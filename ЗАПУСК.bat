@@ -1,9 +1,9 @@
 @echo off
-title Puffnow Bot
+title Demo Bot
 color 0A
 echo.
 echo  ==============================
-echo   ЗАПУСК PUFFNOW BOT
+echo   ЗАПУСК DEMO BOT
 echo  ==============================
 echo.
 
