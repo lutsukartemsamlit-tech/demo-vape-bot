@@ -2426,6 +2426,8 @@ bot.on('callback_query', async (query) => {
   } else if (data === 'add_device_start') {
     addProductState[userId] = { step: 'device_name', data: { categoryId: 'disposable' } };
     bot.editMessageText('➕ *Добавление устройства*\n\nВведите название:\n_Например: XROS 7_', { chat_id: chatId, message_id: query.message.message_id, parse_mode: 'Markdown' });
+    // Убираем клавиатуру админа на время добавления
+    bot.sendMessage(chatId, 'Введите данные или нажмите /cancel для отмены', { reply_markup: { remove_keyboard: true } });
     bot.answerCallbackQuery(query.id);
   } else if (data === 'device_type_pod') {
     const st = addProductState[userId];
