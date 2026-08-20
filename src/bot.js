@@ -761,6 +761,13 @@ bot.on('message', async (msg) => {
         showAdminPanel(chatId);
       }
       break;
+    case '❌ Закрыть чат с поддержкой':
+      if (chat.isChatOpen(userId)) {
+        chat.closeChat(userId);
+        const mainMenuObj = buildMainMenu(WEBAPP_URL, userId);
+        bot.sendMessage(chatId, '✅ Чат с поддержкой закрыт', mainMenuObj);
+      }
+      break;
   }
 });
 
@@ -2891,8 +2898,8 @@ bot.on('callback_query', async (query) => {
     chat.openChat(clientUserId, clientOrder.chatId, clientUsername, clientFirstName);
     // Убираем клавиатуру у пользователя пока чат активен
     bot.sendMessage(clientOrder.chatId,
-      '💬 Менеджер начал с вами чат. Напишите сообщение.\n\nЧтобы закрыть чат — /cancel',
-      { reply_markup: { remove_keyboard: true } }
+      '💬 Менеджер начал с вами чат. Напишите сообщение.',
+      { reply_markup: { keyboard: [['❌ Закрыть чат с поддержкой']], resize_keyboard: true } }
     );
     chat.setAdminReplyMode(userId, clientUserId);
     
