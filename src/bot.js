@@ -357,6 +357,19 @@ bot.on('photo', async (msg) => {
   const userId = msg.from.id;
   const photo = msg.photo[msg.photo.length - 1];
 
+  // Для админов - показываем file_id если нет активного процесса добавления
+  if (isAdmin(userId) && !addProductState[userId] && !reviewState[userId]) {
+    const caption = msg.caption || '';
+    bot.sendMessage(
+      chatId,
+      `📸 *File ID фотографии:*\n\n\`${photo.file_id}\`\n\n` +
+      (caption ? `📝 Подпись: ${caption}\n\n` : '') +
+      `_Скопируйте file_id для использования в базе данных_`,
+      { parse_mode: 'Markdown' }
+    );
+    return;
+  }
+
   // Если админ добавляет фото для нового товара
   if (addProductState[userId] && addProductState[userId].step === 'image') {
     const state = addProductState[userId];
