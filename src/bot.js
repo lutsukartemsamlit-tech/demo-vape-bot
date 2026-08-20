@@ -1741,11 +1741,20 @@ async function sendReviewPage(chatId, reviews, stats, page, hasPurchase, deleteM
   }
 
   if (r.photoFileId) {
-    await bot.sendPhoto(chatId, r.photoFileId, {
-      caption: text,
-      parse_mode: 'Markdown',
-      reply_markup: keyboard
-    });
+    try {
+      await bot.sendPhoto(chatId, r.photoFileId, {
+        caption: text,
+        parse_mode: 'Markdown',
+        reply_markup: keyboard
+      });
+    } catch (error) {
+      // Если photo file_id неверный, отправляем без фото
+      console.log('⚠️ Invalid photo file_id, sending text only');
+      await bot.sendMessage(chatId, text, {
+        parse_mode: 'Markdown',
+        reply_markup: keyboard
+      });
+    }
   } else {
     await bot.sendMessage(chatId, text, {
       parse_mode: 'Markdown',
