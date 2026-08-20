@@ -259,7 +259,7 @@
       "stock": 50,
       "icon": "💧",
       "parentId": "annima",
-      "image": "https://via.placeholder.com/400x300/ffd700/000?text=Annima+Gold",
+      "image": "AgACAgIAAxkBAAN4aob5LYU2yXqJb9CXXkf-9V77d9gAAugXaxvZHzhI2c9A_bXa7tABAAMCAAN4AAM9BA",
       "flavors": [
         {
           "name": "Ледяной виноград",
@@ -329,7 +329,7 @@
       "stock": 50,
       "icon": "💧",
       "parentId": "annima",
-      "image": "https://via.placeholder.com/400x300/a8e6cf/000?text=Annima+Sour",
+      "image": "AgACAgIAAxkBAAN7aob5RunCZLcOgkBP32KCkeXEzhoAAukXaxvZHzhItfJ-pbxOltsBAAMCAAN5AAM9BA",
       "flavors": [
         {
           "name": "Виноградный чупа-чупс",
@@ -387,7 +387,7 @@
       "stock": 45,
       "icon": "💧",
       "location": "Все точки",
-      "image": "https://via.placeholder.com/400x300/e74c3c/fff?text=Evil+Nun",
+      "image": "AgACAgIAAxkBAAN9aob5U0_TsyKbDQ_Ap9Rklhcpgp4AAi8Xaxu7VWBLrJV7a-dSO9UBAAMCAAN5AAM9BA",
       "flavors": [
         {
           "name": "Ананас со льдом",
@@ -489,7 +489,7 @@
       "stock": 40,
       "icon": "💧",
       "location": "Все точки",
-      "image": "https://via.placeholder.com/400x300/95a5a6/fff?text=Bjorn+Long",
+      "image": "AgACAgIAAxkBAAN_aob5XjmXaGjPBkP4TkPCKG8sGSkAAjAXaxu7VWBLA7VNvSlS_TYBAAMCAAN5AAM9BA",
       "flavors": [
         {
           "name": "Виноградный арбуз",
@@ -547,7 +547,7 @@
       "stock": 35,
       "icon": "💧",
       "location": "Все точки",
-      "image": "https://via.placeholder.com/400x300/2c3e50/fff?text=Dark+Choir",
+      "image": "AgACAgIAAxkBAAOBaob5aZsGebshDl-nw5V9wnbit4YAAjEXaxu7VWBLPj3v-UOAxS0BAAMCAAN4AAM9BA",
       "flavors": [
         {
           "name": "Арбуз лед",
@@ -601,7 +601,7 @@
       "stock": 50,
       "icon": "💧",
       "location": "Все точки",
-      "image": "https://via.placeholder.com/400x300/34495e/fff?text=Bjorn+Zloy+v2",
+      "image": "AgACAgIAAxkBAAODaob5c4Hf9UlEyLJ5umXG9b86jv8AAjIXaxu7VWBLbkZ4-SEvjp4BAAMCAAN4AAM9BA",
       "flavors": [
         {
           "name": "Вишня клубника",
@@ -663,7 +663,7 @@
       "stock": 45,
       "icon": "💧",
       "location": "Все точки",
-      "image": "https://via.placeholder.com/400x300/3498db/fff?text=Dota",
+      "image": "AgACAgIAAxkBAAOFaob5gb4GMM7e6LhLj6AQQLkw3VoAAjQXaxu7VWBLGI3W7yIBzrsBAAMCAAN5AAM9BA",
       "flavors": [
         {
           "name": "Арбуз Дыня Бабл-гам",
@@ -757,7 +757,7 @@
       "stock": 40,
       "icon": "💧",
       "location": "Все точки",
-      "image": "https://via.placeholder.com/400x300/7f8c8d/fff?text=Skala",
+      "image": "AgACAgIAAxkBAAOHaob5jYL-vIaq-n6qIeQkUSZnUnEAAjUXaxu7VWBLSL0wQRgIr_YBAAMCAAN4AAM9BA",
       "flavors": [
         {
           "name": "Ананас со льдом",
@@ -895,7 +895,7 @@
       "stock": 35,
       "icon": "💧",
       "location": "Все точки",
-      "image": "https://via.placeholder.com/400x300/27ae60/fff?text=Rick+Morty",
+      "image": "AgACAgIAAxkBAAOJaob5nXwG406IbUcMHl7fZPKROl8AAjYXaxu7VWBL78XDEgABzulFAQADAgADeQADPQQ",
       "isParent": true,
       "subProducts": [
         "rick_morty_acid",
@@ -913,7 +913,7 @@
       "stock": 35,
       "icon": "💧",
       "parentId": "rick_morty",
-      "image": "https://via.placeholder.com/400x300/16a085/fff?text=Bad+Acid",
+      "image": "AgACAgIAAxkBAAOLaob5o3moyeujT_i5CqLP2U0xvCkAAl8daxsUTmlLAAGoM9THeRT5AQADAgADeQADPQQ",
       "flavors": [
         {
           "name": "Виноградный Чупа Чупс",
@@ -984,7 +984,7 @@
       "stock": 35,
       "icon": "💧",
       "parentId": "rick_morty",
-      "image": "https://via.placeholder.com/400x300/3498db/fff?text=Bad+Ice",
+      "image": "AgACAgIAAxkBAAOLaob5o3moyeujT_i5CqLP2U0xvCkAAl8daxsUTmlLAAGoM9THeRT5AQADAgADeQADPQQ",
       "flavors": [
         {
           "name": "Виноградная Фанта",
@@ -1051,7 +1051,7 @@
       "stock": 50,
       "icon": "💧",
       "location": "Кинотеатр \"Космос\"",
-      "image": "https://via.placeholder.com/400x300/c0392b/fff?text=Samoubiytsa",
+      "image": "AgACAgIAAxkBAAOPaob5uM5uBNGJAU3bXjlLdbliD7AAAjoXaxu7VWBL8eFtWomtanUBAAMCAAN5AAM9BA",
       "flavors": [
         {
           "name": "Ананас кокос лед",
@@ -1181,7 +1181,7 @@
       "stock": 40,
       "icon": "💧",
       "location": "Все точки",
-      "image": "https://via.placeholder.com/400x300/9b59b6/fff?text=Hysterica",
+      "image": "AgACAgIAAxkBAAORaob5wY2UanJd3pi87IBgZdFrG40AAjwXaxu7VWBLi7SKBMFU_PYBAAMCAAN5AAM9BA",
       "flavors": [
         {
           "name": "Ананас Ежевика",
@@ -1255,7 +1255,7 @@
       "stock": 35,
       "icon": "💧",
       "location": "Все точки",
-      "image": "https://via.placeholder.com/400x300/d35400/fff?text=Podonki",
+      "image": "AgACAgIAAxkBAAOTaob5y2qyKag5F2WudsC0NPcfV30AAj0Xaxu7VWBLhiXmbXj0Y5kBAAMCAAN5AAM9BA",
       "flavors": [
         {
           "name": "Арбуз Черника",
@@ -1317,7 +1317,7 @@
       "stock": 60,
       "icon": "💧",
       "location": "Все точки",
-      "image": "https://via.placeholder.com/400x300/8e44ad/fff?text=Angry+Vape",
+      "image": "AgACAgIAAxkBAAOVaob52HBl8NGTbcn4wWcEyu8iVSEAAkAXaxu7VWBLBVMV-6aj1wcBAAMCAAN5AAM9BA",
       "flavors": [
         {
           "name": "Ананас со сливками",
