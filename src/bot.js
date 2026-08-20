@@ -718,15 +718,9 @@ bot.on('message', async (msg) => {
       }
       state.data.price = price;
       state.data.cashPrice = price;
-      state.step = 'device_desc';
-      bot.sendMessage(chatId, `✅ Цена: ${formatPrice(price)}\n\nВведите описание:`);
-      return;
-    }
-
-    if (state.step === 'device_desc') {
-      state.data.description = text;
+      state.data.description = ''; // Описание убрано
       state.step = 'device_type';
-      bot.sendMessage(chatId, 'Выберите тип:', {
+      bot.sendMessage(chatId, `✅ Цена: ${formatPrice(price)}\n\nВыберите тип:`, {
         reply_markup: {
           inline_keyboard: [
             [{ text: '🔋 Под', callback_data: 'device_type_pod' }],
@@ -771,13 +765,7 @@ bot.on('message', async (msg) => {
     // Добавление дочерней линейки (например, новая линейка шайб)
     if (state.step === 'sub_name') {
       state.data.name = text;
-      state.step = 'sub_desc';
-      bot.sendMessage(chatId, 'Введите описание линейки:');
-      return;
-    }
-
-    if (state.step === 'sub_desc') {
-      state.data.description = text;
+      state.data.description = ''; // Описание убрано
       state.step = 'sub_flavors';
       bot.sendMessage(chatId, 'Введите варианты/вкусы (каждый с новой строки):\n\nНапример:\nCRANBERRY TEA\nDOUBLE MINT\nENERGY MANGO');
       return;
@@ -813,13 +801,7 @@ bot.on('message', async (msg) => {
     // Добавление товара в Расходники (accessories)
     if (state.step === 'acc_name') {
       state.data.name = text;
-      state.step = 'acc_desc';
-      bot.sendMessage(chatId, 'Введите описание товара:');
-      return;
-    }
-
-    if (state.step === 'acc_desc') {
-      state.data.description = text;
+      state.data.description = ''; // Описание убрано
       state.step = 'acc_price';
       bot.sendMessage(chatId, 'Введите цену (в рублях, например: 150):');
       return;
@@ -868,13 +850,7 @@ bot.on('message', async (msg) => {
     // Добавление жидкости (liquids)
     if (state.step === 'liquid_name') {
       state.data.name = text;
-      state.step = 'liquid_desc';
-      bot.sendMessage(chatId, 'Введите описание жидкости:');
-      return;
-    }
-
-    if (state.step === 'liquid_desc') {
-      state.data.description = text;
+      state.data.description = ''; // Описание убрано
       state.step = 'liquid_price';
       bot.sendMessage(chatId, 'Введите цену (в рублях, например: 450):');
       return;
