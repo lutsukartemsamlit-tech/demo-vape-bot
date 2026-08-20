@@ -6,3 +6,4 @@ data/orders.json
 *.log
 .vercel
 ngrok.exe
+.env*
