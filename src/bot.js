@@ -468,6 +468,28 @@ bot.on('photo', async (msg) => {
     return;
   }
 
+  // Если админ добавляет фото для жидкости
+  if (addProductState[userId] && addProductState[userId].step === 'liquid_image') {
+    const state = addProductState[userId];
+    state.data.image = photo.file_id;
+
+    // Сохраняем жидкость
+    products.push(state.data);
+    if (redis) {
+      try {
+        await redis.set('products', JSON.stringify({ products, categories }));
+        console.log('✅ Жидкость с фото сохранена в Redis');
+      } catch (e) {
+        console.error('❌ Ошибка Redis:', e);
+      }
+    }
+
+    const summary = `✅ *Жидкость добавлена с фото!*\n\n💧 ${state.data.name}\n💰 ${formatPrice(state.data.price)}\n🎨 Вариантов: ${state.data.flavors.length}\n🆔 ID: \`${state.data.id}\``;
+    delete addProductState[userId];
+    bot.sendMessage(chatId, summary, { parse_mode: 'Markdown', ...buildAdminMenu(WEBAPP_URL, userId) });
+    return;
+  }
+
   // Если пользователь в шаге отправки фото для отзыва
   if (reviewState[userId] && reviewState[userId].step === 'photo') {
     const state = reviewState[userId];
@@ -836,6 +858,62 @@ bot.on('message', async (msg) => {
           reply_markup: {
             inline_keyboard: [[
               { text: '➡️ Пропустить фото', callback_data: 'skip_acc_image' }
+            ]]
+          }
+        }
+      );
+      return;
+    }
+
+    // Добавление жидкости (liquids)
+    if (state.step === 'liquid_name') {
+      state.data.name = text;
+      state.step = 'liquid_desc';
+      bot.sendMessage(chatId, 'Введите описание жидкости:');
+      return;
+    }
+
+    if (state.step === 'liquid_desc') {
+      state.data.description = text;
+      state.step = 'liquid_price';
+      bot.sendMessage(chatId, 'Введите цену (в рублях, например: 450):');
+      return;
+    }
+
+    if (state.step === 'liquid_price') {
+      const price = parseFloat(text);
+      if (isNaN(price) || price <= 0) {
+        bot.sendMessage(chatId, '❌ Неверная цена. Введите число больше 0');
+        return;
+      }
+      state.data.price = price;
+      state.data.cashPrice = Math.round(price * 0.9);
+      state.step = 'liquid_flavors';
+      bot.sendMessage(chatId, 'Введите вкусы (каждый с новой строки):\n\nНапример:\nАрбуз лед\nКлубника\nДыня');
+      return;
+    }
+
+    if (state.step === 'liquid_flavors') {
+      const flavors = text.split('\n').map(v => v.trim()).filter(v => v.length > 0);
+      if (flavors.length === 0) {
+        bot.sendMessage(chatId, '❌ Укажите хотя бы один вариант');
+        return;
+      }
+      state.data.flavors = flavors.map(name => ({ name, stock: '', enabled: true }));
+      const baseId = state.data.name.toLowerCase().replace(/[^a-z0-9\s]/gi, '').trim().replace(/\s+/g, '_').substring(0, 20);
+      state.data.id = products.find(p => p.id === baseId) ? `${baseId}_${Date.now().toString(36)}` : baseId;
+      state.data.stock = 50;
+      state.data.enabled = true;
+      state.data.location = 'Все точки';
+      
+      // Переходим к фото
+      state.step = 'liquid_image';
+      bot.sendMessage(chatId,
+        `✅ Добавлено вариантов: ${flavors.length}\n\nОтправьте фото жидкости или нажмите "Пропустить"`,
+        {
+          reply_markup: {
+            inline_keyboard: [[
+              { text: '➡️ Пропустить фото', callback_data: 'skip_liquid_image' }
             ]]
           }
         }
@@ -1948,6 +2026,9 @@ function showAdminCategoryProducts(chatId, categoryId, messageId = null) {
   if (categoryId === 'disposable') {
     keyboard.push([{ text: '➕ Добавить устройство', callback_data: 'add_device_start' }]);
   }
+  if (categoryId === 'liquids') {
+    keyboard.push([{ text: '➕ Добавить жидкость', callback_data: 'add_liquid_start' }]);
+  }
   if (categoryId === 'accessories') {
     keyboard.push([{ text: '➕ Добавить товар', callback_data: 'add_accessory_start' }]);
   }
@@ -2579,6 +2660,30 @@ bot.on('callback_query', async (query) => {
     return;
   }
 
+  // Пропустить добавление фото жидкости
+  if (data === 'skip_liquid_image') {
+    if (addProductState[userId] && addProductState[userId].step === 'liquid_image') {
+      const state = addProductState[userId];
+
+      // Сохраняем жидкость без фото
+      products.push(state.data);
+      if (redis) {
+        try {
+          await redis.set('products', JSON.stringify({ products, categories }));
+        } catch (e) {
+          console.error('❌ Ошибка Redis:', e);
+        }
+      }
+      
+      delete addProductState[userId];
+
+      const summary = `✅ *Жидкость добавлена!*\n\n💧 ${state.data.name}\n💰 ${formatPrice(state.data.price)}\n🎨 Вариантов: ${state.data.flavors.length}\n🆔 ID: \`${state.data.id}\``;
+      bot.deleteMessage(chatId, query.message.message_id).catch(() => {});
+      bot.sendMessage(chatId, summary, { parse_mode: 'Markdown', ...buildAdminMenu(WEBAPP_URL, userId) });
+    }
+    return;
+  }
+
   // Выбор жидкости для добавления вкусов
   if (data.startsWith('addflavor_')) {
     const productId = data.replace('addflavor_', '');
@@ -2730,6 +2835,11 @@ bot.on('callback_query', async (query) => {
   } else if (data === 'add_accessory_start') {
     addProductState[userId] = { step: 'acc_name', data: { categoryId: 'accessories', icon: '📍' } };
     bot.editMessageText('➕ *Добавление товара*\n\nВведите название:\n_Например: Шайбы IceBerg_', { chat_id: chatId, message_id: query.message.message_id, parse_mode: 'Markdown' });
+    bot.sendMessage(chatId, 'Введите данные или /cancel для отмены', { reply_markup: { remove_keyboard: true } });
+    bot.answerCallbackQuery(query.id);
+  } else if (data === 'add_liquid_start') {
+    addProductState[userId] = { step: 'liquid_name', data: { categoryId: 'liquids', icon: '💧' } };
+    bot.editMessageText('➕ *Добавление жидкости*\n\nВведите название:\n_Например: Злая монашка HARD 70мг_', { chat_id: chatId, message_id: query.message.message_id, parse_mode: 'Markdown' });
     bot.sendMessage(chatId, 'Введите данные или /cancel для отмены', { reply_markup: { remove_keyboard: true } });
     bot.answerCallbackQuery(query.id);
   } else if (data.startsWith('add_subproduct_')) {
