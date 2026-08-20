@@ -2507,10 +2507,7 @@ bot.on('callback_query', async (query) => {
         `• Расходники\n` +
         `• Энергетики\n\n` +
         `Выберите действие из меню ниже:`;
-      bot.sendPhoto(chatId, 'AgACAgIAAxkBAAIBbGpsZeQTcBF6z6O3yS6CO_2eq75mAALvHWsbFE5hS_nvyP8d07FrAQADAgADeQADPQQ', {
-        caption: welcomeText,
-        ...(isAdminUser ? adminMenu : mainMenu)
-      });
+      bot.sendMessage(chatId, welcomeText, isAdminUser ? adminMenu : mainMenu);
     } else {
       bot.answerCallbackQuery(query.id, { text: '❌ Вы ещё не подписались на канал!', show_alert: true });
     }
