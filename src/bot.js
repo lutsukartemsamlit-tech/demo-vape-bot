@@ -2002,7 +2002,34 @@ function showAdminProductDetail(chatId, productId, messageId = null) {
     });
   }
 
+  // Если это родительский продукт (isParent) - показываем дочерние линейки
+  if (product.isParent && product.subProducts && product.subProducts.length > 0) {
+    text += `\n*Линейки:*\n`;
+    product.subProducts.forEach(subId => {
+      const subProduct = products.find(p => p.id === subId);
+      if (subProduct) {
+        const status = subProduct.enabled === false ? '❌' : '✅';
+        text += `${status} ${subProduct.name}\n`;
+      }
+    });
+  }
+
   const keyboard = [];
+
+  // Для родительских продуктов: кнопки управления дочерними линейками
+  if (product.isParent && product.subProducts && product.subProducts.length > 0) {
+    product.subProducts.forEach(subId => {
+      const subProduct = products.find(p => p.id === subId);
+      if (subProduct) {
+        keyboard.push([{ 
+          text: `📦 ${subProduct.name}`, 
+          callback_data: `admin_product_${subProduct.id}` 
+        }]);
+      }
+    });
+    // Кнопка добавления новой линейки
+    keyboard.push([{ text: '➕ Добавить линейку', callback_data: `add_subproduct_${product.id}` }]);
+  }
 
   // Кнопки управления цветами
   if (product.colors && product.colors.length > 0) {
